@@ -4,8 +4,8 @@
  * 2020 09 19
 *************************************/
 
-#include "../include/timetrans.h"
-#include "../include/common.h"
+#include "timetrans.h"
+#include "common.h"
 #include <iomanip>
 const unsigned short LeapSec = 37;
 

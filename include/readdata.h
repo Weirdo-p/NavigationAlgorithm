@@ -116,15 +116,22 @@ class ReadDataFromFile
     ***************************/
     FileHead GetHead();
 
+    /***********************************
+     * to reset observations every time
+     * SPP and SPV is done
+    ***********************************/
     int ResetObs();
 
     protected:
+    // observations
     Obs BDSObs[MAXBDSSRN];
     Obs GPSObs[MAXGPSSRN];
 
+    // ephemeris
     Ephemeris GPSEph[MAXGPSSRN];
     Ephemeris BDSEph[MAXBDSSRN];
 
+    // head infomation
     FileHead Head;
 
     unsigned char HeadBuff[25];
@@ -132,76 +139,95 @@ class ReadDataFromFile
 
 class ReadDataFromSocket {
 public:
-    int OpenSocket(char* ip, int port, int &test);
+    /***************************************
+     * function: to connect with web server
+     * @param       ip      [in]  IP address
+     * @param       port    [oin] port
+     * @param       desc    [out] flag num
+     * @return              status code
+    ***************************************/
+    int OpenSocket(char* ip, int port, int &desc);
 
+    /********************************************
+     * function: to copy data from socket buffer
+     * @param       buff    [out] data buff
+     * @param       desc    [in]  socket num
+     * @return              status code
+    ********************************************/
     int ReadSocketData(BUFF &buff, int desc);
 
+    /***********************************
+     * to reset observations every time
+     * SPP and SPV is done
+    ***********************************/
     int ResetObs();
 
-    /*********************************************
+    /*********************************************************
      * function: a message must begin with
      * 0xAA 0x44 0x12 if finding the beginning,
      * return true.
      * else if meeting with eof or other error
      * return false
-     * @param buff [out] to store head without aa4412
-     * @return 0   successfully find the head
-     *         1   open file error
-     *         2   file ending
-     *         3   crc wrong
-     *         4   other errors
-    **********************************************/
+     * @param socketdata [out] to store head without aa4412
+     * @return 0         successfully find the head
+     *         1         open file error
+     *         2         file ending
+     *         3         crc wrong
+     *         4         other errors
+    *********************************************************/
     int ReadHead(BUFF &socketdata, unsigned char* head);
 
-    /******************************************
+    /******************************************************
      * to read bds eph
-     * @param buff [in] using it to check CRC
-     * @return 1   open file error
-     *         2   file ending
-     *         3   crc wrong
-     *         4   other errors
-     *         5   find Eph
-     *         6   find Obs
-    ******************************************/
+     * @param socketdata    [in] using it to check CRC
+     * @return 1            open file error
+     *         2            file ending
+     *         3            crc wrong
+     *         4            other errors
+     *         5            find Eph
+     *         6            find Obs
+    *******************************************************/
     int ReadMessage(BUFF &socketdata, unsigned char* buff);
 
-    /********************************************
+    /***************************************************
      * to read gps eph
-     * @param buff [in] using it to CRC
-     * @return 0   successfully find the head
-     *         1   open file error
-     *         2   file ending
-     *         3   crc wrong
-     *         4   other errors
-    ********************************************/
+     * @param socketdata    [in] using it to CRC
+     * @return 0            successfully find the head
+     *         1            open file error
+     *         2            file ending
+     *         3            crc wrong
+     *         4            other errors
+    ****************************************************/
     int ReadGPSEph(BUFF &socketdata, unsigned char* buff);
 
-    /******************************************
+    /***************************************************
      * to read bds eph
-     * @param buff [in] using it to check CRC
-     * @return 0   successfully find the head
-     *         1   open file error
-     *         2   file ending
-     *         3   crc wrong
-     *         4   other errors
-    ******************************************/
+     * @param socketdata    [in] using it to check CRC
+     * @return 0            successfully find the head
+     *         1            open file error
+     *         2            file ending
+     *         3            crc wrong
+     *         4            other errors
+    ***************************************************/
     int ReadBDSEph(BUFF &socketdata, unsigned char* buff);
 
-    /******************************************
+    /***************************************************
      * to read bds eph
-     * @param buff [in] using it to check CRC
-     * @return 1   open file error
-     *         2   file ending
-     *         3   crc wrong
-     *         4   other errors
-     *         5   find GPS OBS
-     *         6   find BDS OBS
-    ******************************************/
+     * @param socketdata    [in] using it to check CRC
+     * @return 1            open file error
+     *         2            file ending
+     *         3            crc wrong
+     *         4            other errors
+     *         5            find GPS OBS
+     *         6            find BDS OBS
+    ***************************************************/
     int ReadObs(BUFF &socketdata, unsigned char* HeadBuff);
 
-    /**
-     * 
-    */
+    /*****************************************
+     * function: to abandon old data stream
+     * @param   socketdata
+     * @return  status code
+    *****************************************/
     int reset(BUFF &socketdata);
 public:
     /**************************
@@ -287,19 +313,19 @@ unsigned long CRC32Value(int i);
 
 /****************************************************************
  * Calculates the CRC-32 of a block of data all at once
- * ulCount - Number of bytes in the data block
- * ucBuffer - Data block
+ * @param ulCount       Number of bytes in the data block
+ * @param ucBuffer      Data block
 ****************************************************************/
 unsigned long CalculateBlockCRC32(unsigned long ulCount, unsigned char* ucBuffer);
 
-/**************************************************
+/*********************************************************
  * function: to validate CRC
- * @param Head    [in] the Head stream
- * @param Message [in] the Message stream
- *                     include CRC information
+ * @param Head           [in]   the Head stream
+ * @param Message        [in]   the Message stream
+ *                              include CRC information
  * @param MessageLength
- * @param pos     [in] position of CRC
- * @return true flase
-**************************************************/
+ * @param pos            [in]   position of CRC
+ * @return                      true if success
+*********************************************************/
 bool CRCCheck(unsigned char* Head, unsigned char* Message, int MessageLength, int pos);
 #endif

@@ -4,7 +4,7 @@
  * format of the data file should 
  * read the Reference Manual for OEM7
 ****************************************/
-#include "../include/readdata.h"
+#include "readdata.h"
 #include <iostream>
 #include <string.h>
 #include <math.h>
@@ -22,10 +22,6 @@ int ReadDataFromFile::ReadHead(FILE* file, unsigned char* buff)
     unsigned char HeadFlag[3];
     while(!feof(file))
     {
-        // GPSEPHEM_HDR eph_hdr;
-
-        // fread (&eph_hdr, sizeof(GPSEPHEM_HDR), 1, file);
-
         if(!fread(&HeadFlag[2], 1, 1, file))
             return 2;
 
@@ -78,16 +74,6 @@ int ReadDataFromFile::ReadMessage(FILE* file, unsigned char* HeadBuff)
         flag = this->ReadObs(file, HeadBuff);
     }
 
-    // if(Head.MessageID == 47)
-    // {
-    //     char* buff = new char[this->Head.MessageLength + 4];
-    //     fread(buff, 76, 1, file);
-    //     this->GPSObs[0].psrpos.B = C2D(buff + 8, 8);
-    //     this->GPSObs[0].psrpos.L = C2D(buff + 16, 8);
-    //     this->GPSObs[0].psrpos.H = C2D(buff + 24, 8);
-    //     cout << this->GPSObs[0].psrpos << endl;
-    // }
-    // cout << endl << endl;
     return flag;
 }
 
@@ -107,7 +93,6 @@ int ReadDataFromFile::ReadGPSEph(FILE* file, unsigned char* HeadBuff)
             return 3;
 
         unsigned short int prn = U2I((unsigned char*)buff, 4) - 1;
-        // cout << prn << endl;
         if(prn < 0 || prn > MAXGPSSRN)
             return 4;
         this->GPSEph[prn].PRN = prn + 1;
@@ -138,7 +123,6 @@ int ReadDataFromFile::ReadGPSEph(FILE* file, unsigned char* HeadBuff)
         this->GPSEph[prn].af1 = C2D(buff + 188, 8);
         this->GPSEph[prn].af2 = C2D(buff + 196, 8);
         this->GPSEph[prn].URA = C2D(buff + 216, 8);
-        // cout << setprecision(15) << GPSEph[prn].omega << endl;
     }
     catch(...)
     {
@@ -166,7 +150,6 @@ int ReadDataFromFile::ReadBDSEph(FILE* file, unsigned char* HeadBuff)
     try
     {
         unsigned short int prn = U2I((unsigned char*)buff, 4) - 1;
-        // cout << prn << endl;
         if(prn < 0 || prn > MAXBDSSRN)
             return 4;
         this->BDSEph[prn].PRN = prn + 1;
@@ -197,7 +180,6 @@ int ReadDataFromFile::ReadBDSEph(FILE* file, unsigned char* HeadBuff)
         this->BDSEph[prn].crs = C2D(buff + 172, 8);
         this->BDSEph[prn].cic = C2D(buff + 180, 8);
         this->BDSEph[prn].cis = C2D(buff + 188, 8);
-        // cout << BDSEph[prn].sqrtA << endl;
     }
     catch(...)
     {
@@ -245,7 +227,6 @@ int ReadDataFromFile::ReadObs(FILE* file, unsigned char* HeadBuff)
                     // B1 signal
                     if(SignalType == 0 || SignalType == 4)
                     {
-                        // cout << "B1   " << PRN << endl;
                         this->BDSObs[PRN].psr[0] = C2D(buff + i * 44 + 8, 8);
                         this->BDSObs[PRN].psr_sigma[0] = C2F(buff + i * 44 + 16, 4);
                         this->BDSObs[PRN].adr[0] = C2D(buff + i * 44 + 20, 8);
@@ -257,7 +238,6 @@ int ReadDataFromFile::ReadObs(FILE* file, unsigned char* HeadBuff)
                     // B3 signal
                     if(SignalType == 2 || SignalType == 6)
                     {
-                        // cout << "B3   " << PRN << endl;
                         this->BDSObs[PRN].psr[1] = C2D(buff + i * 44 + 8, 8);
                         this->BDSObs[PRN].psr_sigma[1] = C2F(buff + i * 44 + 16, 4);
                         this->BDSObs[PRN].adr[1] = C2D(buff + i * 44 + 20, 8);
@@ -276,7 +256,6 @@ int ReadDataFromFile::ReadObs(FILE* file, unsigned char* HeadBuff)
                     // L1 C/A
                     if(SignalType == 0)
                     {
-                        // cout << "L1   " << PRN << endl;
                         this->GPSObs[PRN].psr[0] = C2D(buff + i * 44 + 8, 8);
                         this->GPSObs[PRN].psr_sigma[0] = C2F(buff + i * 44 + 16, 4);
                         this->GPSObs[PRN].adr[0] = C2D(buff + i * 44 + 20, 8);
@@ -288,7 +267,6 @@ int ReadDataFromFile::ReadObs(FILE* file, unsigned char* HeadBuff)
                     // L2P
                     if(SignalType == 9)
                     {
-                        // cout << "L2   " << PRN << endl;
                         this->GPSObs[PRN].psr[1] = C2D(buff + i * 44 + 8, 8);
                         this->GPSObs[PRN].psr_sigma[1] = C2F(buff + i * 44 + 16, 4);
                         this->GPSObs[PRN].adr[1] = C2D(buff + i * 44 + 20, 8);
@@ -302,7 +280,6 @@ int ReadDataFromFile::ReadObs(FILE* file, unsigned char* HeadBuff)
                 default: break;
             }
         }
-        // cout << endl << endl;
     }
     catch(...)
     {
@@ -330,18 +307,11 @@ int ReadDataFromSocket::OpenSocket(char* ip, int port, int &desc) {
         perror("connect");
         return -1;
     }
-    // recv()
-    // unsigned char buff[80];
-    // recv(sock_cli, buff, 80, 0);
-    // close(sock_cli);
     return 0;
 }
 
 int ReadDataFromSocket::ReadSocketData(BUFF &buff, int desc) {
     // 将数据先读入缓冲区
-    // int rest = MAXDATALEN - pos; // 剩余数据量
-    // if(pos == 0)
-    //     rest = 0;
     if(buff.pos != 0)
         reset(buff);
     int count = buff.pos;
@@ -356,22 +326,6 @@ int ReadDataFromSocket::ReadSocketData(BUFF &buff, int desc) {
     }
     buff.len = count;
     buff.pos = 0;
-    
-    // ofstream out("/home/weirdo/Documents/coding/NavigationAlgorithm/src/test.bin", ios::binary | ios::app);
-    // for(int i = 0; i < MAXBUFFLEN; ++i)
-    //     out << ttt[i];
-    // unsigned char* tmp = new unsigned char[MAXBUFFLEN - pos];
-    // recv(desc, tmp, MAXBUFFLEN - pos, 0);
-    // if(pos != 0)
-    //     reset(buff, pos);
-    // for(int i = temp; i < MAXBUFFLEN; ++i) {
-    //     buff[i] = tmp[i - temp];
-    // }
-    // delete[] tmp;
-    // 合并数据
-    // memcpy(buff, tmp, MAXBUFFLEN - pos - 1);
-    // 指针位置指向buff[0]
-    // pos = 0;
     return 0;
 }
 
@@ -447,8 +401,7 @@ int ReadDataFromSocket::ReadObs(BUFF &socketdata, unsigned char* HeadBuff) {
         delete[] buff;
         return 3;
     }
-    // cout << "success" << endl;
-    // pos += Head.MessageLength + 4;
+
     for(int prn = 0; prn < MAXGPSSRN; ++prn){
         this->GPSObs[prn].psr[0] = -1;
         this->GPSObs[prn].psr[1] = -1;
@@ -505,7 +458,6 @@ int ReadDataFromSocket::ReadObs(BUFF &socketdata, unsigned char* HeadBuff) {
                     // L1 C/A
                     if(SignalType == 0)
                     {
-                        // cout << "L1   " << PRN << endl;
                         this->GPSObs[PRN].psr[0] = C2D(buff + i * 44 + 8, 8);
                         this->GPSObs[PRN].psr_sigma[0] = C2F(buff + i * 44 + 16, 4);
                         this->GPSObs[PRN].adr[0] = C2D(buff + i * 44 + 20, 8);
@@ -517,7 +469,6 @@ int ReadDataFromSocket::ReadObs(BUFF &socketdata, unsigned char* HeadBuff) {
                     // L2P
                     if(SignalType == 9)
                     {
-                        // cout << "L2   " << PRN << endl;
                         this->GPSObs[PRN].psr[1] = C2D(buff + i * 44 + 8, 8);
                         this->GPSObs[PRN].psr_sigma[1] = C2F(buff + i * 44 + 16, 4);
                         this->GPSObs[PRN].adr[1] = C2D(buff + i * 44 + 20, 8);
@@ -531,7 +482,6 @@ int ReadDataFromSocket::ReadObs(BUFF &socketdata, unsigned char* HeadBuff) {
                 default: break;
             }
         }
-        // cout << endl << endl;
     }
     catch(...)
     {
@@ -563,8 +513,6 @@ int ReadDataFromSocket::ReadGPSEph(BUFF &socketdata, unsigned char* HeadBuff)
             delete[] buff;
             return 3;
         }
-        // cout << "GPS   " << endl;
-        // cout << "success" << endl;
         unsigned short int prn = U2I((unsigned char*)buff, 4) - 1;
         // cout << prn << endl;
         if(prn < 0 || prn > MAXGPSSRN)

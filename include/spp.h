@@ -18,6 +18,17 @@
 class SPP
 {
 public:
+    /*****************************************************************
+     * function: Standard Point Positioning
+     * @param   GPSPosAndVel    GPS satellite position and velocity
+     * @param   BDSPosAndVel    BDS satellite position and velocity
+     * @param   GPSObs          GPS observations
+     * @param   BDSObs          BDS observations
+     * @param   GPSEph          GPS ephemeris
+     * @param   BDSEph          BDS ephemeris
+     * @param   type            Ellipsoid parameters
+     * @return                  status code
+    *****************************************************************/
     int solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
                  Obs* &&GPSObs, Obs* &&BDSObs, Ephemeris* &&GPSEph,
                  Ephemeris* &&BDSEph, ELLIPSOID type);
@@ -25,30 +36,52 @@ public:
 
     /***************************************
      * to calculate Elevation Angle
-     * @param neu satellite position in neu
-     * @return EA in rad
+     * @param neu   satellite position in neu
+     * @return      EA in rad
     **************************************/
     double CalculateEA(const XYZ neu);
 
     /***************************************
      * function: to calculate azimuth angle
-     * @param neu satellite position in neu
-     * @return azimuth in rad
+     * @param   neu satellite position in neu
+     * @return      azimuth in rad
     ***************************************/
     double CalculateAzi(const XYZ neu);
 
-    /***************************************************
+    /**********************************************************
      * function: to fix the influence by earth rotation
-    ***************************************************/
+     * @param   deltat      [in]      signal transmitting time
+     * @param   SatPosition [in]      satellite position
+     * @param   flag        [in]      navigation system
+     * @param   fixed       [out]     result
+    **********************************************************/
     void EarthRotationFix(double deltat, XYZ SatPosition,
                           NavSys flag, XYZ &fixed);
     
+    /*****************************************************************
+     * function: Standard Positioning Velocity
+     * @param   GPSPosAndVel    GPS satellite position and velocity
+     * @param   BDSPosAndVel    BDS satellite position and velocity
+     * @param   GPSObs          GPS observations
+     * @param   BDSObs          BDS observations
+     * @param   GPSEph          GPS ephemeris
+     * @param   BDSEph          BDS ephemeris
+     * @param   type            Ellipsoid parameters
+     * @return                  status code
+    *****************************************************************/
     int solveSPV(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
                  Obs* &&GPSObs, Obs* &&BDSObs, Ephemeris* &&GPSEph,
                  Ephemeris* &&BDSEph, ELLIPSOID type);
     
+    /*******************************************************
+     * function: to set reference position of user receiver
+     * @param   Ref
+    *******************************************************/
     void setRefPos(XYZ Ref);
 
+    /*************************
+     * function: clear result
+    *************************/
     void resetResult();
     
 public:

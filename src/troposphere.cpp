@@ -1,8 +1,8 @@
-#include "../include/troposphere.h"
+#include "troposphere.h"
 #include <iostream>
 #include <math.h>
-#include "../include/coordinate.h"
-#include "../include/common.h"
+#include "coordinate.h"
+#include "common.h"
 
 using namespace std;
 

@@ -1,4 +1,4 @@
-#include "../include/satpos.h"
+#include "satpos.h"
 #include <fstream>
 #include <iomanip>
 
@@ -56,7 +56,6 @@ int SatPos::CalculateGPSPos(Ephemeris* &&GPSEph, Obs* &&obs, const SPPResult res
             Calculateik(Gps[prn].phik, GPSEph[prn].cis, GPSEph[prn].cic,
                         GPSEph[prn].I0, GPSEph[prn].I0Rate, Gps[prn].tk, Gps[prn].ik);
 
-            // cout << Gps[prn].vk << "   " << Gps[prn].phik << "     " << Gps[prn].uk << "   " << Gps[prn].rk << "   " << Gps[prn].ik << endl;
             XYZ OrbPosi;
             CalculateOrbPos(Gps[prn].rk, Gps[prn].uk, OrbPosi);
 
@@ -66,64 +65,6 @@ int SatPos::CalculateGPSPos(Ephemeris* &&GPSEph, Obs* &&obs, const SPPResult res
 
             CalculateEPos(OrbPosi, Gps[prn].Omegak,
                           Gps[prn].ik, Gps[prn].SatPosition);
-                        //   cout << "ts" << endl;
-            // Vector3d RefPos;
-            // XYZ ttt;
-            // ELLIPSOID type;
-            // BLH2XYZ(obs[0].psrpos, type, ttt);
-            // RefPos(0, 0) = ttt.X;
-            // RefPos(1, 0) = ttt.Y;
-            // RefPos(2, 0) = ttt.Z;
-            // Vector3d SatPos;
-            // SatPos(0, 0) = Gps[prn].SatPosition.X;
-            // SatPos(1, 0) = Gps[prn].SatPosition.Y;
-            // SatPos(2, 0) = Gps[prn].SatPosition.Z;
-            // double distance = dist(RefPos, SatPos);
-            // cout << distance - obs[prn].psr[0] - Gps[prn].clkdif * LIGHTSPEED + GPSEph[prn].tgd * LIGHTSPEED<< endl;
-            // if(prn == 18){
-            //     cout << prn << endl;
-            //     cout << Gps[prn].SatPosition;
-            //     cout << endl;
-            // }
-            // ofstream out("/home/weirdo/Documents/coding/NavigationAlgorithm/src/test.txt", ios::app);
-            
-            // out << setprecision(15) << GPSEph[prn].sqrtA * GPSEph[prn].sqrtA / 1000.0 << ",";
-            // out << setprecision(15) << GPSEph[prn].ecc << ",";
-            // out << setprecision(15) << Gps[prn].ik << ",";
-            // out << setprecision(15) << Gps[prn].Omegak << ",";
-            // out << setprecision(15) << GPSEph[prn].omega << ",";
-            // out << setprecision(15) << Mk << endl;
-            
-            // // out << setprecision(15) << GPSEph[prn].cic << endl;
-            // // out << setprecision(15) << GPSEph[prn].omegaO << endl;
-            // // out << setprecision(15) << GPSEph[prn].cis << endl;
-            // // out << setprecision(15) << GPSEph[prn].I0 << endl;
-            // // out << setprecision(15) << GPSEph[prn].crc << endl;
-            // // out << setprecision(15) << GPSEph[prn].omega << endl;
-            // // out << setprecision(15) << GPSEph[prn].omegaORate << endl;
-            // // out << setprecision(15) << GPSEph[prn].I0Rate << endl;
-            // // out << setprecision(15) << GPSROTATIONRATE << endl;
-            // // out << setprecision(15) << GPSMIU << endl;
-            // // out << setprecision(15) << t << endl;
-            // // out << setprecision(15) << GPSEph[prn].RefTime << endl;;
-            // out << setprecision(15) << Gps[prn].SatPosition << endl;;
-            // // out << setprecision(15) << Gps[prn].n << endl;
-            // // out << setprecision(15) << Mk << endl;
-            // // out << setprecision(15) << Gps[prn].Ek << endl;
-            // // out << setprecision(15) << Gps[prn].vk << endl;
-            // // out << setprecision(15) << Gps[prn].phik << endl;
-            // // out << setprecision(15) << Gps[prn].uk << endl;
-            // // out << setprecision(15) << Gps[prn].rk << endl;
-            // // out << setprecision(15) << Gps[prn].ik << endl << endl << endl;;
-            // // out << setprecision(15) << Gps[prn].tk << endl << endl << endl;;
-            // // Vector3d test;
-            // // test(0, 0) = Gps[prn].SatPosition.X;
-            // // test(1, 0) = Gps[prn].SatPosition.Y;
-            // // test(2, 0) = Gps[prn].SatPosition.Z;
-            // // cout << prn << endl;
-            // // cout << test.norm() << endl << endl;
-            // // test.deleteMatrix();
-
         }
         catch(...)
         {
@@ -234,14 +175,7 @@ bool SatPos::Calculatetk(const SATTIME ObsTime, const SATTIME RefTime, NavSys fl
         RefTime_GPST = RefTime;
 
     SATTIME tk_GPST = ObsTime - RefTime_GPST;
-    // cout << tk_GPST << endl;
     tk = tk_GPST.Week * 604800 + tk_GPST.SOW;
-    // cout << setprecision(15) << ObsTime << endl;
-    // tk = ObsTime.SOW - RefTime_GPST.SOW;
-    // if (tk > 302400)
-    //     tk -= 604800;
-    // if (tk < -302400)
-    //     tk += 604800;
     // 星历有效期
     double expired;
     if(flag == GPS)

@@ -10,12 +10,12 @@
 
 #include <iostream>
 #include <iomanip>
-#include "../include/matrix.h"
-#include "../include/timetrans.h"
-#include "../include/coordinate.h"
-#include "../include/readdata.h"
-#include "../include/satpos.h"
-#include "../include/spp.h"
+#include "matrix.h"
+#include "timetrans.h"
+#include "coordinate.h"
+#include "readdata.h"
+#include "satpos.h"
+#include "spp.h"
 #include <sstream>
 #include <string.h>
 
@@ -130,8 +130,7 @@ int main(int argc, char** argv)
         int port;
         tmp >> port;
         char* ip = argv[2];
-        // char ip[] = "47.114.134.129";
-        // int port = 6000;
+
         ReadDataFromSocket decoder;
         BUFF databuff;
         int pos = 0;
@@ -163,9 +162,6 @@ int main(int argc, char** argv)
             SPP SppSolver;
             SppSolver.setRefPos(XYZ(-2267800.0690, 5009341.6472, 3220989.9179));
             SPPResult result = SppSolver.GetResult();
-            // result.UserRefPositionXYZ.X = -2267800.0690;
-            // result.UserRefPositionXYZ.Y = 5009341.6472;
-            // result.UserRefPositionXYZ.Z = 3220989.9179;
             
             double dt0 = result.GPSR + result.BDSR;
             int count = 0;
@@ -203,14 +199,7 @@ int main(int argc, char** argv)
                                     decoder.GetGPSObs(), decoder.GetBDSObs(), 
                                     decoder.GetGPSEph(), decoder.GetBDSEph(), type);
                 result = SppSolver.GetResult();
-                // cout << result.ObsTime;
                 cout << result.UserPositionXYZ;
-                // cout << result.UserVelocity;
-                // cout << result.diffNeu;
-                // cout << result.PDop << endl;
-                // cout << result.UserPositionSigma << endl;
-                // cout << result.UserVelocitySigma << endl;
-                // cout << result.UserRefPositionXYZ << endl;
                 WriteToFile(result);
                 decoder.ResetObs();
             }

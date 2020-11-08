@@ -4,27 +4,27 @@
 ******************************************/
 #ifndef _COMMON_H_
 #define _COMMON_H_
-#define PI 3.14159265358979323846
-#define SECRAD  (180.0 * 3600 / PI)  // 206265
-#define LIGHTSPEED 2.99792458e8
+#define PI                  3.14159265358979323846
+#define SECRAD              (180.0 * 3600 / PI)
+#define LIGHTSPEED          2.99792458e8
 
-#define GPSMIU 3.986005e14
-#define BDSMIU 3.986004418e14
+#define GPSMIU              3.986005e14
+#define BDSMIU              3.986004418e14
 
-#define GPSROTATIONRATE 7.2921151467e-5
-#define BDSROTATIONRATE 7.2921150e-5
+#define GPSROTATIONRATE     7.2921151467e-5
+#define BDSROTATIONRATE     7.2921150e-5
 
-#define GPSL1 (10.23e6 * 154)
-#define GPSL2 (10.23e6 * 120)
-#define BDSB1 1561.098e6
-#define BDSB3 1268.52e6
+#define GPSL1               (10.23e6 * 154)
+#define GPSL2               (10.23e6 * 120)
+#define BDSB1               1561.098e6
+#define BDSB3               1268.52e6
 
-#define MAXGPSSRN 32
-#define MAXBDSSRN 64
-#define CRC32_POLYNOMIAL 0xEDB88320L
+#define MAXGPSSRN           32
+#define MAXBDSSRN           64
+#define CRC32_POLYNOMIAL    0xEDB88320L
 
-#define MAXBUFFLEN 40480
-#define MAXDATALEN 30360
+#define MAXBUFFLEN          40480
+#define MAXDATALEN          30360
 
 #include <iostream>
 #include <iomanip>
@@ -39,9 +39,9 @@
 
 using namespace std;
 
-typedef Matrix<double, 3, 3> Matrix3d;
-typedef Matrix<double, 3, 1> Vector3d;
-typedef Matrix<double, Dynamic, Dynamic> MatrixXd;
+typedef Matrix<double, 3, 3>                Matrix3d;
+typedef Matrix<double, 3, 1>                Vector3d;
+typedef Matrix<double, Dynamic, Dynamic>    MatrixXd;
 
 /*******************************************************************************
  ****************************Time Related Structure*****************************
@@ -58,12 +58,12 @@ typedef Matrix<double, Dynamic, Dynamic> MatrixXd;
 *************************/
 struct COMMONTIME
 {
-    unsigned short int Year;
-    unsigned short int Month;
-    unsigned short int Day;
-    unsigned short int Hour;
-    unsigned short int Min;
-    double Sec;
+    unsigned short int  Year;
+    unsigned short int  Month;
+    unsigned short int  Day;
+    unsigned short int  Hour;
+    unsigned short int  Min;
+    double              Sec;
 
     friend ostream & operator<<(ostream &out, const COMMONTIME UT);
 };
@@ -75,8 +75,8 @@ struct COMMONTIME
 **************************/
 struct MJDTIME
 {
-    int Day;
-    double FracDay;
+    int     Day;
+    double  FracDay;
 
     friend ostream & operator<<(ostream &out, const MJDTIME MJD);
 };
@@ -88,8 +88,8 @@ struct MJDTIME
 ************************************/
 struct SATTIME
 {
-    int Week;
-    double SOW = -1;
+    int     Week;
+    double  SOW = -1;
 
     friend ostream & operator<<(ostream &out, const SATTIME GPST);
     SATTIME operator-(const SATTIME &a) const;
@@ -143,12 +143,12 @@ struct BLH
 /*********************************
  * Ellipsoid parameters
  * 默认使用WGS84参数
- * @param a  长半轴
- * @param b  短半轴
- * @param c  简化书写而使用的符号
- * @param alpha  扁率
- * @param e2     第一偏心率的二次方
- * @param e1_2   第二偏心率的二次方
+ * @param a         长半轴
+ * @param b         短半轴
+ * @param c         简化书写而使用的符号
+ * @param alpha     扁率
+ * @param e2        第一偏心率的二次方
+ * @param e1_2      第二偏心率的二次方
 *********************************/
 struct ELLIPSOID
 {
@@ -167,80 +167,28 @@ struct ELLIPSOID
 /****************************************
  * to describe navigation system
  * GPS = 0, BDS = 4
- * to match the Reference Manual
+ * to match the Reference Manual(OEM7)
  * for now I only deal with GPS and BDS
 ****************************************/
 enum NavSys{GPS = 0, BDS = 4};
 
-/**********************************************
- * store observation data
- * @param psr for GPS, psr[0] stores L1
- *            psr[1] stores L2. For BDS, 
- *            psr[0] stores B2, psr[1] stores
- *            B3. same as other lists.
- * @param CNo carrier to noise density ratio
- * @param LockTime [0] is the flag param
- *                 if it is -1, it means we do 
- *                 not have its Obs
-**********************************************/
+// observation information
 struct Obs
 {
-    SATTIME ObsTime;
-    double psr[2];
-    float psr_sigma[2];
-    double adr[2];
-    float adr_sigma[2];
-    float dopp[2];
-    float CNo[2];
-    float LockTime[2];
-    BLH psrpos;
+    SATTIME ObsTime;        // GPS Time
+    double  psr[2];         // psedorange for L/B1 L2 B3
+    float   psr_sigma[2];   // sigma for psr observations
+    double  adr[2];         // phase observations (not used)
+    float   adr_sigma[2];   // sigma for adr observations(not used)
+    float   dopp[2];        // doppler observations
+    float   CNo[2];         // 信噪比
+    float   LockTime[2];    // lock time(not used)
+    BLH     psrpos;         // user position calculated by receiver
 
     Obs() { psr[0] = -1; psr[1] = -1; }
 };
 
-/*********************************************
- * store satellite ephemeris
- * @param sys    navigation satellite system
- * @param PRN    satellite SRN
- * @param HealthStatus
- * @param RefTime reference time{week and toe}
- * @param M0     mean anomaly of reference
- * @param omega  Argument of Perigee(ridians)
- * @param cuc  
- * @param cus
- * @param crc
- * @param crs
- * @param cic
- * @param crs
- * @param I0
- * @param I0Rate
- * @param deltaN
- * @param ecc    eccentricty
- * @param omegaO
- * @param OmegaORate
- * @param iodc
- * @param toc
- * @param tgd
- * @param URA   the flag param----if it is -1,
- *              that means we do not have this
- *              sat's eph
-*********************************************/
-
-// typedef __uint64_t      Ulong;
-// typedef __uint32_t      Ushort;
-// typedef double          Double;
-// typedef __int64_t       Bool;
-// typedef unsigned char   Uchar;
-
-// typedef struct GPSEPHEM_HDR {
-//     Uchar   sync1;
-//     Uchar   sync2;
-//     Uchar   sync3;
-//     Uchar   hdr_len;
-//     Ushort  msg_id;
-//     char    msg_type;
-// };
-
+// ephemris infomation
 struct Ephemeris
 {
     NavSys          sys;
@@ -263,6 +211,7 @@ struct Ephemeris
     double          URA = -1;
 };
 
+// head infomation
 struct FileHead
 {
     int     MessageID;
@@ -276,13 +225,13 @@ struct FileHead
  * store satellites' position, velocity,
  * and useful values calculated during 
  * calculating the satellites' position
- * @param n  Corrected mean motion
- * @param vk 真近点角
- * @param Phik 近地点角距
- * @param Ek 偏近点角
- * @param uk 改正后的升交角距
- * @param ik   [out] 改正后轨道倾角
- * @param rk  [in] 改正后轨道倾角
+ * @param n     Corrected mean motion
+ * @param vk    真近点角
+ * @param Phik  近地点角距
+ * @param Ek    偏近点角
+ * @param uk    改正后的升交角距
+ * @param ik    [out] 改正后轨道倾角
+ * @param rk    [in] 改正后轨道倾角
 *****************************************/
 struct Satellite
 {
@@ -322,11 +271,12 @@ struct SPPResult
     SPPResult();
 };
 
+// copy data from socket buffer
 struct BUFF
 {
-    unsigned char buff[MAXBUFFLEN];
-    int pos;
-    int len;
+    unsigned char   buff[MAXBUFFLEN];   // buffer
+    int             pos;                // position for now
+    int             len;                // real total data length
 
     BUFF() { memset(buff, 0, MAXDATALEN); pos = 0; len = 0; }
 };
@@ -340,8 +290,20 @@ struct BUFF
 ************************************************/
 double dist(const Vector3d a, const Vector3d b);
 
+/***********************************************
+ * function: calculate distance of two points
+ * @param a
+ * @param b
+ * @return distance
+***********************************************/
 double dist(const XYZ a, const XYZ b);
 
+/*******************************************************************
+ * function: write SPP and SPV result to specific file
+ * @param result    SPP and SPV result
+ * @param path      where it wiil be saved, default in workfolder
+ * @return          status code
+*******************************************************************/
 int WriteToFile(SPPResult result, string path = "./");
 
 #endif

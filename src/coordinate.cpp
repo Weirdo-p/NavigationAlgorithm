@@ -132,57 +132,10 @@ bool XYZ2BLH(XYZ xyz, ELLIPSOID ellipsoid, BLH &blh)
     blh.L = Rad2Deg(blh.L);
     // 迭代初值  度为单位
     unsigned short int iteration = 0;
-    // double deltaZ = ellipsoid.e2 * xyz.Z;
-
     // in deg
     double B0 = 1;
     while(iteration != 100)
     {
-        // double N;
-        // double Dist2 = xyz.X * xyz.X + xyz.Y * xyz.Y;
-        // if(Dist2 < 1e-4)
-        //     return false;
-        // double B_rad = atan((xyz.Z + deltaZ) / sqrt(Dist2));
-        // blh.B = Rad2Deg(B_rad);
-        // bool flag = GetN(blh, ellipsoid, N);
-        // if(!flag)
-        //     return false;
-        // blh.H = sqrt(Dist2 + pow((xyz.Z + deltaZ), 2)) - N;
-        // double sinB = (xyz.Z + deltaZ) / sqrt(Dist2 + pow((xyz.Z + deltaZ), 2));
-        // // if(abs())
-        // // 暂时不太清楚这里的阈值怎么设置
-        // if(abs(N * ellipsoid.e2 * sinB) - deltaZ < 1e-10)
-        //     break;
-        // deltaZ = N * ellipsoid.e2 * sinB;
-        // ++ iteration;
-        // double dist = sqrt(xyz.X * xyz.X + xyz.Y * xyz.Y);
-        // double t0 = xyz.Z / dist;
-        // double ti;
-        // if(iteration == 0)
-        //     ti = t0;
-        // double p = ellipsoid.c * ellipsoid.e2 / dist;
-        // double k = 1 + ellipsoid.e1_2;
-        // double ti1 = t0 + p * ti / sqrt(k + ti);
-        // if(abs(ti - ti1) < 1e-10)
-        // {
-        //     ti = ti1;
-        //     double B_rad = atan(ti);
-        //     blh.B = Rad2Deg(B_rad);
-            
-        //     double N;
-        //     GetN(blh, ellipsoid, N);
-        //     blh.H = xyz.Z / sin(B_rad) - N * (1 - ellipsoid.e2);
-        //     break;
-        // }
-        // ti = ti1;
-        // double B_rad = atan(ti);
-        // blh.B = Rad2Deg(B_rad);
-
-        // double N;
-        // GetN(blh, ellipsoid, N);
-        // blh.H = xyz.Z / sin(B_rad) - N * (1 - ellipsoid.e2);
-        // // cout << iteration << endl;
-        // iteration ++;
         double sinB = sin(Deg2Rad(B0));
         double W = sqrt(1 - ellipsoid.e2 * sinB * sinB);
         double N = ellipsoid.a / W;

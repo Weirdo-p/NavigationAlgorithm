@@ -1,6 +1,6 @@
-#include "../include/spp.h"
-#include "../include/common.h"
-#include "../include/troposphere.h"
+#include "spp.h"
+#include "common.h"
+#include "troposphere.h"
 extern const int Dynamic;
 
 /**
@@ -98,7 +98,7 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
             B(num, 2) = n;
             B(num, 3) = 1;
 
-            P(num, num) = 1.0;// / pow(GPSObs[prn].psr_sigma[0] + GPSObs[prn].psr_sigma[1], 2);
+            P(num, num) = 1.0 / pow(GPSObs[prn].psr_sigma[0] + GPSObs[prn].psr_sigma[1], 2);
             num ++;
             SatPos.deleteMatrix();
         }
@@ -143,7 +143,6 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
                 T = 0;
             double IFpsr = BDSB1 * BDSB1 / (BDSB1 * BDSB1 - BDSB3 * BDSB3) * BDSObs[prn].psr[0] - 
                            BDSB3 * BDSB3 / (BDSB1 * BDSB1 - BDSB3 * BDSB3) * BDSObs[prn].psr[1];
-            // double beta = pow(BDSB1, 2) / pow(BDSB3, 2);
             
             // w矩阵
             w(num, 0) = IFpsr - distance + BDSPosAndVel[prn].clkdif * LIGHTSPEED - BDSR -
@@ -157,7 +156,7 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
             else
                 B(num, 4) = 1;
 
-            P(num, num) = 1.0;// / pow(BDSObs[prn].psr_sigma[0] + BDSObs[prn].psr_sigma[1], 2);
+            P(num, num) = 1.0 / pow(BDSObs[prn].psr_sigma[0] + BDSObs[prn].psr_sigma[1], 2);
             num ++;
             SatPos.deleteMatrix();
         }
@@ -193,31 +192,18 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
         else if(BDSObsNum != 0 && GPSObsNum != 0)
             BDSR += v(4, 0);
 
-        // cout << v.row() << endl;
-        // MatrixXd v_T = v.transpose();
-        // cout << v_T.row() << "   " << v_T.col() << endl;
-        // cout << P.row() << "   " << P.col() << endl;
-        // cout << w.row() << "  " << w.col() << endl;
         MatrixXd tmp6 = B * v;
-        // cout << tmp6.row() << "   " << tmp6.col() << endl;
         MatrixXd tmp7 = tmp6 - w;
         MatrixXd tmp8 = tmp7.transpose();
         MatrixXd tmp9 = tmp8 * P;
         MatrixXd tmp10 = tmp9 * tmp7;
 
-        // cout << v << endl;
-        // cout << v_T << endl;
-        // cout << tmp6 << endl;
-        // cout << tmp7 << endl;
-        // cout << tmp10 << endl << endl;
         int Obsnum = 5;
         if(GPSObsNum ==0 || BDSObsNum ==0)
             Obsnum = 4;
-        // cout << tmp10(0, 0) << endl;
         double sigma = sqrt(tmp10(0, 0) / (BDSObsNum + GPSObsNum - Obsnum));
         double pdop = sqrt(tmp3(0, 0) + tmp3(1, 1) + tmp3(2, 2));
-        // cout << sigma << endl;
-        // cout << pdop << endl << endl;
+
         result.UserPositionSigma = sigma;
         result.PDop = pdop;
         tmp6.deleteMatrix();
@@ -239,7 +225,6 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
             tmp5.deleteMatrix();
             dx.deleteMatrix();
             v.deleteMatrix();
-            // cout << count << endl;
             break;        
         }
         count ++;
@@ -310,7 +295,6 @@ int SPP::solveSPV(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
                 continue;
 
             XYZ fix = GPSPosAndVel[prn].SatVelocity;
-            // EarthRotationFix(GPSPosAndVel[prn].deltat, GPSPosAndVel[prn].SatVelocity, GPS, fix);
             // 在SPP时已经自转改正  故不需要再次改正
             XYZ SatPosi = this->result.GPSPosi[prn];
 
@@ -520,14 +504,6 @@ int WriteToFile(SPPResult result, string path){
         return 1;
     }
     out.right;
-    // out << setw(4) << "Week  " << setw(9) << "SOW  " << setw(13) << "ECEF/X-m  ";
-    // out << setw(13) << "ECEF/Y-m  " << setw(13) << "ECEF/Z-m  ";
-    // out << setw(13) << "REF-ECEF/X-m  " << setw(13) << "REF-ECEF/Y-m  " << setw(13) << "ECEF/Z-m  ";
-    // out << setw(7) << "EAST/m  " << setw(7) << "NORTH/m  " << setw(7) << "UP/m  ";
-    // out << setw(12) << "B/deg  " << setw(12) << "L/deg  " << setw(12) << "H/m  ";
-    // out << setw(7) << "VX-m/s  " << setw(7) << "VY-m/s  "<< setw(7) << "VZ-m/s  ";
-    // out << setw(7) << "PDOP  " << setw(7) << "Sigma-m  " << setw(7) << "Sigma-m/s" << endl;
-    if(isdata)
         out << "Week      SOW         ECEF/X-m      ECEF/Y-m      ECEF/Z-m     REF-ECEF/X-m  REF-ECEF/Y-m    ECEF/Z-m      EAST/m  NORTH/m  UP/m    B/deg     L/deg     H/m      VX-m/s  VY-m/s  VZ-m/s     PDOP  Sigma-m  Sigma-m/s    BDSObsNum     GPSObsNum" << endl;
 
     out << fixed << setprecision(4);
