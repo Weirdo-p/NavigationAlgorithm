@@ -98,7 +98,7 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
             B(num, 2) = n;
             B(num, 3) = 1;
 
-            P(num, num) = 1.0 / pow(GPSObs[prn].psr_sigma[0] + GPSObs[prn].psr_sigma[1], 2);
+            P(num, num) = 1.0;// / pow(GPSObs[prn].psr_sigma[0] + GPSObs[prn].psr_sigma[1], 2);
             num ++;
             SatPos.deleteMatrix();
         }
@@ -156,7 +156,7 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
             else
                 B(num, 4) = 1;
 
-            P(num, num) = 1.0 / pow(BDSObs[prn].psr_sigma[0] + BDSObs[prn].psr_sigma[1], 2);
+            P(num, num) = 1.0;// / pow(BDSObs[prn].psr_sigma[0] + BDSObs[prn].psr_sigma[1], 2);
             num ++;
             SatPos.deleteMatrix();
         }
@@ -193,7 +193,7 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
             BDSR += v(4, 0);
 
         MatrixXd tmp6 = B * v;
-        MatrixXd tmp7 = tmp6 - w;
+        MatrixXd tmp7 = tmp6 + w;
         MatrixXd tmp8 = tmp7.transpose();
         MatrixXd tmp9 = tmp8 * P;
         MatrixXd tmp10 = tmp9 * tmp7;
@@ -504,6 +504,7 @@ int WriteToFile(SPPResult result, string path){
         return 1;
     }
     out.right;
+    if(isdata)
         out << "Week      SOW         ECEF/X-m      ECEF/Y-m      ECEF/Z-m     REF-ECEF/X-m  REF-ECEF/Y-m    ECEF/Z-m      EAST/m  NORTH/m  UP/m    B/deg     L/deg     H/m      VX-m/s  VY-m/s  VZ-m/s     PDOP  Sigma-m  Sigma-m/s    BDSObsNum     GPSObsNum" << endl;
 
     out << fixed << setprecision(4);
@@ -516,7 +517,7 @@ int WriteToFile(SPPResult result, string path){
     out << setw(8) << result.PDop << setw(8) << result.UserPositionSigma << setw(8) << result.UserVelocitySigma << "  ";
     out << setw(10) << result.BDSObsNum << "  " << setw(10) << result.GPSObsNum << "       ";
     for(int prn = 0; prn < MAXBDSSRN; ++ prn) {
-        if(result.BDSDist[prn] != 0 && result.GPSPosi[prn].Z != -1)
+        if(result.BDSDist[prn] != 0 && result.BDSPosi[prn].Z != -1)
             out << "C" << setw(2) << setfill('0') << prn + 1;
     }
     for(int prn = 0; prn < MAXGPSSRN; ++ prn) {

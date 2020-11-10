@@ -225,6 +225,8 @@ Matrix<Type, _0, _1> Matrix<Type, _0, _1>::operator+(const Matrix<Type, _0, _1> 
     }
 
     Matrix<Type, _0, _1> result;
+    if(_0 == Dynamic || _1 == Dynamic) 
+        result.resize(matrix.row(), matrix.col());    
 
     for(int i = 0; i < this->row(); ++i)
         for(int j = 0; j < this->col(); ++j)
