@@ -116,8 +116,6 @@ struct XYZ
     XYZ(double X_, double Y_, double Z_);
 
     friend ostream & operator<<(ostream &out, const XYZ xyz);
-
-
 };
 
 /********************************

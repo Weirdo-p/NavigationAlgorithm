@@ -69,7 +69,7 @@ int SatPos::CalculateGPSPos(Ephemeris* &&GPSEph, Obs* &&obs, const SPPResult res
         catch(...)
         {
             cout << "error happened when calculating GPS sat pos" << endl;
-            return 1;
+            return -1;
         }
     }
     return 0;
@@ -441,7 +441,7 @@ int SatPos::CalculateSatVel(Ephemeris* &&Eph, const NavSys flag, SPPResult resul
         catch(...)
         {
             cout << "error happened when calculate satellite velocity" << endl;
-            return 1;
+            return -1;
         }
         
     }
@@ -572,7 +572,7 @@ int SatPos::Calculatet(const Obs* ObsData, const Ephemeris* Eph,
     catch(...)
     {
         cout << "error happened when calculating t" << endl;
-        return 1;
+        return -1;
     }
     return 0;
 }
@@ -596,7 +596,7 @@ int SatPos::CalculateClkDif(const Ephemeris* Eph, const int prn, const SATTIME t
     catch(...)
     {
         cout << "error happened when calculation satellite clock difference" << endl;
-        return 1;
+        return -1;
     }
     
     double deltatr = F * Eph[prn].ecc * Eph[prn].sqrtA * sin(Ek);

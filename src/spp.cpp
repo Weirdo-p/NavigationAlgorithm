@@ -8,8 +8,8 @@ extern const int Dynamic;
  * [ l m n deltaGPSR deltaBDSR ]
 */
 int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
-               Obs* &&GPSObs, Obs* &&BDSObs, Ephemeris* &&GPSEph,
-               Ephemeris* &&BDSEph, ELLIPSOID type)
+                  Obs* &&GPSObs, Obs* &&BDSObs, Ephemeris* &&GPSEph,
+                  Ephemeris* &&BDSEph, ELLIPSOID type)
 {
     int GPSObsNum = 0, BDSObsNum = 0;
     int cols = 5;
@@ -19,9 +19,10 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
     for(int i = 0; i < MAXBDSSRN; ++i)
         if(BDSPosAndVel[i].n != -1)
             BDSObsNum ++;
-    // GPSObsNum = 0;
+
     this->result.BDSObsNum = BDSObsNum;
     this->result.GPSObsNum = GPSObsNum;
+
     if(GPSObsNum == 0 || BDSObsNum == 0)
         cols = 4;
     if(BDSObsNum ==0 && GPSObsNum <= 4)
@@ -57,7 +58,8 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
                 continue;
             }
             this->result.ObsTime = GPSObs[prn].ObsTime;
-            // 几何距离
+
+            // 地球自转改正
             XYZ fix;
             EarthRotationFix(GPSPosAndVel[prn].deltat, GPSPosAndVel[prn].SatPosition, GPS, fix);
             this->result.GPSPosi[prn] = fix;
@@ -81,7 +83,7 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
 
             double E = this->CalculateEA(satNEU);
             double A = this->CalculateAzi(satNEU);
-            // cout << "G" << prn + 1 << E << "   " << T
+
             this->result.GPSelev[prn] = E;
             this->result.GPSAzimuth[prn] = A;
 
@@ -181,7 +183,7 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
             RefPos.deleteMatrix();
             B.deleteMatrix();
             v.deleteMatrix();
-            return 2;
+            return 5;
         }
         RefPos(0, 0) += v(0, 0);
         RefPos(1, 0) += v(1, 0);
@@ -368,7 +370,7 @@ int SPP::solveSPV(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
             w.deleteMatrix();
             B.deleteMatrix();
             v.deleteMatrix();
-            return 2;
+            return 5;
         }
         RefV.X += v(0, 0);
         RefV.Y += v(1, 0);

@@ -119,7 +119,7 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    if(command == "-i") {
+    else if(command == "-i") {
         if(argc < 4 || argc >= 5) {
             cout << "Usage: -i [IP address] [port]\n" << endl;
             return 1;
@@ -206,6 +206,9 @@ int main(int argc, char** argv)
         }
 
     }
-    /* read data from socket */
-    
+
+    else {
+        cout << "Usage: -i [IP address] [port]\n       -f [Binary File Path]" << endl;
+        return 1;
+    }
 }

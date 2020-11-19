@@ -49,7 +49,7 @@ int ReadDataFromFile::ReadHead(FILE* file, unsigned char* buff)
         catch(...)
         {
             cout << "error happened when reading head" << endl;
-            return 4;
+            return -1;
         }
         break;
     }
@@ -80,7 +80,7 @@ int ReadDataFromFile::ReadMessage(FILE* file, unsigned char* HeadBuff)
 int ReadDataFromFile::ReadGPSEph(FILE* file, unsigned char* HeadBuff)
 {
     if(this->Head.MessageID != 7)
-        return 4;
+        return 6;
 
     char* buff = new char[this->Head.MessageLength + 4];
 
@@ -127,7 +127,7 @@ int ReadDataFromFile::ReadGPSEph(FILE* file, unsigned char* HeadBuff)
     catch(...)
     {
         cout << "error happened when reading GPS ehpe" << endl;
-        return 2;
+        return -1;
     }
     
     delete [] buff;
@@ -184,7 +184,7 @@ int ReadDataFromFile::ReadBDSEph(FILE* file, unsigned char* HeadBuff)
     catch(...)
     {
         cout << "error happened when reading bds eph" << endl;
-        return 4;
+        return -1;
     }
     delete[] buff;
     return 0;
@@ -193,7 +193,7 @@ int ReadDataFromFile::ReadBDSEph(FILE* file, unsigned char* HeadBuff)
 int ReadDataFromFile::ReadObs(FILE* file, unsigned char* HeadBuff)
 {
     if(Head.MessageID != 43)
-        return 4;
+        return 6;
 
     char* buff = new char [Head.MessageLength + 4];
     if(!fread(buff, this->Head.MessageLength + 4, 1, file))
@@ -284,7 +284,7 @@ int ReadDataFromFile::ReadObs(FILE* file, unsigned char* HeadBuff)
     catch(...)
     {
         cout << "error happened when reading obs" << endl;
-        return 4;
+        return -1;
     }
     delete[] buff;
     return 0;
@@ -315,20 +315,27 @@ int ReadDataFromSocket::ReadSocketData(BUFF &buff, int desc) {
     if(buff.pos != 0)
         reset(buff);
     int count = buff.pos;
-    while (count < MAXDATALEN)
+    try
     {
-        unsigned char tmp[1024];
-        memset(tmp, 0x00, 1024);
-        int num = recv(desc, tmp, 1024, 0);
-        for(int i = 0; i < num; ++i)
-            buff.buff[count++] = tmp[i];
-        // buff[count] = tmp;
+        while (count < MAXDATALEN)
+        {
+            unsigned char tmp[1024];
+            memset(tmp, 0x00, 1024);
+            int num = recv(desc, tmp, 1024, 0);
+            for(int i = 0; i < num; ++i)
+                buff.buff[count++] = tmp[i];
+            // buff[count] = tmp;
+        }
+        buff.len = count;
+        buff.pos = 0;
+        return 0;
     }
-    buff.len = count;
-    buff.pos = 0;
-    return 0;
+    catch(...)
+    {
+        cout << "error happened when getting data from socket" << endl;
+        return -1;
+    } 
 }
-
 
 int ReadDataFromSocket::ReadHead(BUFF &socketdata, unsigned char* buff) {
     unsigned char HeadFlag[3];
@@ -358,7 +365,7 @@ int ReadDataFromSocket::ReadHead(BUFF &socketdata, unsigned char* buff) {
         catch(...)
         {
             cout << "error happened when reading head" << endl;
-            return 4;
+            return -1;
         }
         break;
     }
@@ -381,7 +388,7 @@ int ReadDataFromSocket::ReadMessage(BUFF &socketdata, unsigned char* buff) {
         flag = this->ReadObs(socketdata, buff);
         return flag;
     }
-    return 100;
+    return -2;  
 }
 
 int ReadDataFromSocket::ReadObs(BUFF &socketdata, unsigned char* HeadBuff) {
@@ -486,7 +493,7 @@ int ReadDataFromSocket::ReadObs(BUFF &socketdata, unsigned char* HeadBuff) {
     catch(...)
     {
         cout << "error happened when reading obs" << endl;
-        return 4;
+        return -1;
     }
     delete[] buff;
     return 0;
@@ -550,7 +557,7 @@ int ReadDataFromSocket::ReadGPSEph(BUFF &socketdata, unsigned char* HeadBuff)
     catch(...)
     {
         cout << "error happened when reading GPS ehpe" << endl;
-        return 2;
+        return -1;
     }
     
     delete [] buff;
@@ -614,7 +621,7 @@ int ReadDataFromSocket::ReadBDSEph(BUFF &socketdata, unsigned char* HeadBuff) {
     catch(...)
     {
         cout << "error happened when reading bds eph" << endl;
-        return 4;
+        return -1;
     }
     delete[] buff;
     return 0;
