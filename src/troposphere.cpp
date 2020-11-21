@@ -6,6 +6,7 @@
 
 using namespace std;
 
+
 double Hopefield(const double E, const double H, double t0,
                  double p0, double RH0)
 {

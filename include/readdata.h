@@ -41,6 +41,13 @@ class ReadDataFromFile
     int ReadHead(FILE* file, unsigned char* buff);
 
     /******************************************
+     * function: to read ref position
+     * @param file  file pointer
+     * @param buff  using it to CRC check
+    ******************************************/
+    int ReadRefPos(FILE* file, unsigned char* buff);
+
+    /******************************************
      * to read bds eph
      * @param buff [in] using it to check CRC
      * @return 1   open file error
@@ -122,19 +129,28 @@ class ReadDataFromFile
     ***********************************/
     int ResetObs();
 
+    /**********************************
+     * function: to decode binary data
+     * @param file  file point
+     * @return      status code
+    **********************************/
+    int decode(FILE* file);
+
     protected:
     // observations
-    Obs BDSObs[MAXBDSSRN];
-    Obs GPSObs[MAXGPSSRN];
+    Obs             BDSObs[MAXBDSSRN];
+    Obs             GPSObs[MAXGPSSRN];
 
     // ephemeris
-    Ephemeris GPSEph[MAXGPSSRN];
-    Ephemeris BDSEph[MAXBDSSRN];
+    Ephemeris       GPSEph[MAXGPSSRN];
+    Ephemeris       BDSEph[MAXBDSSRN];
 
     // head infomation
-    FileHead Head;
+    FileHead        Head;
 
-    unsigned char HeadBuff[25];
+    unsigned char   HeadBuff[25];
+
+    BLH             UserPsrPos;
 };
 
 class ReadDataFromSocket {
@@ -229,6 +245,20 @@ public:
      * @return  status code
     *****************************************/
     int reset(BUFF &socketdata);
+
+    /******************************
+     * function: to read ref pos
+     * @param   socketdata
+     * @return  status code
+    ******************************/
+    int ReadRefPos(BUFF &socketdata);
+
+    /*************************************************
+     * function: read data from specific ip address
+     * @param desc  identifier with socket
+     * @return      status code
+    *************************************************/
+    int decode(int desc);
 public:
     /**************************
      * to get BDS observations
@@ -260,15 +290,17 @@ public:
     ***************************/
     FileHead GetHead();
 protected:
-    Obs BDSObs[MAXBDSSRN];
-    Obs GPSObs[MAXGPSSRN];
+    Obs             BDSObs[MAXBDSSRN];
+    Obs             GPSObs[MAXGPSSRN];
 
-    Ephemeris GPSEph[MAXGPSSRN];
-    Ephemeris BDSEph[MAXBDSSRN];
+    Ephemeris       GPSEph[MAXGPSSRN];
+    Ephemeris       BDSEph[MAXBDSSRN];
 
-    FileHead Head;
+    FileHead        Head;
 
-    unsigned char HeadBuff[25];
+    unsigned char   HeadBuff[25];
+
+    BLH             UserPsrPos;
 };
 
 /********************************************

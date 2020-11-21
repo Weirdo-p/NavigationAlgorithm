@@ -26,6 +26,18 @@
 #define MAXBUFFLEN          40480
 #define MAXDATALEN          30360
 
+// status code
+#define UNKNOWN_ERROR       -1
+#define UNSUPPORTED_MSG     -2
+#define NOT_ENOUGH_OBS      1
+#define FILE_OR_BUFF_END    2
+#define CRC_FAILED          3
+#define INVALID_PRN         4
+#define NOT_INVERTIBLE      5
+#define CONFLICT_ID         6
+#define OPEN_ERROR          7
+#define CONNECTION_FAILED   8
+
 #include <iostream>
 #include <iomanip>
 #include "matrix.h"
@@ -303,5 +315,14 @@ double dist(const XYZ a, const XYZ b);
  * @return          status code
 *******************************************************************/
 int WriteToFile(SPPResult result, string path = "./");
+// declare
+class SatPos;
+class SPP;
+class ReadDataFromFile;
+class ReadDataFromSocket;
+
+int solve(SatPos &satposSolver, SPP &sppSolver, ReadDataFromFile &decoder, ELLIPSOID type, string path = "./");
+
+int solve(SatPos &satposSolver, SPP &sppSolver, ReadDataFromSocket &decoder, ELLIPSOID type, string path = "./");
 
 #endif

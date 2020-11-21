@@ -26,11 +26,11 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
     if(GPSObsNum == 0 || BDSObsNum == 0)
         cols = 4;
     if(BDSObsNum ==0 && GPSObsNum <= 4)
-        return 1;
+        return NOT_ENOUGH_OBS;
     if(GPSObsNum == 0 && BDSObsNum <= 4)
-        return 1;
+        return NOT_ENOUGH_OBS;
     if(GPSObsNum != 0 && BDSObsNum != 0 && GPSObsNum + BDSObsNum < 5)
-        return 1;
+        return NOT_ENOUGH_OBS;
     
     // 测站位置
     Vector3d RefPos;
@@ -183,7 +183,7 @@ int SPP::solveSPP(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
             RefPos.deleteMatrix();
             B.deleteMatrix();
             v.deleteMatrix();
-            return 5;
+            return NOT_INVERTIBLE;
         }
         RefPos(0, 0) += v(0, 0);
         RefPos(1, 0) += v(1, 0);
@@ -370,8 +370,9 @@ int SPP::solveSPV(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
             w.deleteMatrix();
             B.deleteMatrix();
             v.deleteMatrix();
-            return 5;
+            return NOT_INVERTIBLE;
         }
+        
         RefV.X += v(0, 0);
         RefV.Y += v(1, 0);
         RefV.Z += v(2, 0);
@@ -506,13 +507,18 @@ int WriteToFile(SPPResult result, string path){
         return 1;
     }
     out.right;
-    if(isdata)
-        out << "Week      SOW         ECEF/X-m      ECEF/Y-m      ECEF/Z-m     REF-ECEF/X-m  REF-ECEF/Y-m    ECEF/Z-m      EAST/m  NORTH/m  UP/m    B/deg     L/deg     H/m      VX-m/s  VY-m/s  VZ-m/s     PDOP  Sigma-m  Sigma-m/s    BDSObsNum     GPSObsNum" << endl;
+    if(isdata) {
+        out << "Week      SOW         ECEF/X-m      ECEF/Y-m      ECEF/Z-m     ";
+        if (result.UserRefPositionXYZ.X != -1)
+            out << "REF-ECEF/X-m  REF-ECEF/Y-m    ECEF/Z-m      ";
+        out << "EAST/m  NORTH/m  UP/m    B/deg     L/deg     H/m      VX-m/s  VY-m/s  VZ-m/s     PDOP  Sigma-m  Sigma-m/s    BDSObsNum     GPSObsNum" << endl;
+    }
 
     out << fixed << setprecision(4);
     out << result.ObsTime.Week << "  " << result.ObsTime.SOW << "  ";
     out << result.UserPositionXYZ.X << "  " << result.UserPositionXYZ.Y << "  " << result.UserPositionXYZ.Z << "  ";
-    out << result.UserRefPositionXYZ.X << "  " << result.UserRefPositionXYZ.Y << "  " << result.UserRefPositionXYZ.Z << "  ";
+    if(result.UserRefPositionXYZ.X != -1)
+        out << result.UserRefPositionXYZ.X << "  " << result.UserRefPositionXYZ.Y << "  " << result.UserRefPositionXYZ.Z << "  ";
     out << setw(8) << result.diffNeu.X << setw(8) << result.diffNeu.Y << setw(8) << result.diffNeu.Z << "  ";
     out << result.UserPositionBLH.B << "  " << result.UserPositionBLH.L << "  " << result.UserPositionBLH.H << "  ";
     out << setw(8) << result.UserVelocity.X << setw(8) << result.UserVelocity.Y << setw(8) << result.UserVelocity.Z << "  ";
@@ -560,6 +566,11 @@ int WriteToFile(SPPResult result, string path){
 void SPP::setRefPos(XYZ Ref) {
     this->result.UserRefPositionXYZ = Ref;
 }
+
+int SPP::solve(ReadDataFromFile decoder) {
+    
+}
+
 
 SPPResult::SPPResult() {
     memset(GPSDist, 0, MAXGPSSRN);

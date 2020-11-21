@@ -119,4 +119,5 @@ bool GPST2BDST(const SATTIME gpst, SATTIME &bdst);
  *         false  deadly error      
 ***************************************/
 bool BDST2GPST(const SATTIME bdst, SATTIME &gpst);
+
 #endif

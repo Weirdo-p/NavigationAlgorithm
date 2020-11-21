@@ -2,6 +2,7 @@
 #define _SPP_H_
 
 #include "satpos.h"
+#include "readdata.h"
 
 // 解算需要对流层改正（双频，不需要改正电离层）
 // 对流层改正数需要高度角                    
@@ -78,6 +79,13 @@ public:
      * @param   Ref
     *******************************************************/
     void setRefPos(XYZ Ref);
+
+    /*******************************
+     * function: solve SPP question
+     * @param   decoder     data
+     * @return  status code
+    *******************************/
+    int solve(ReadDataFromFile decoder);
 
     /*************************
      * function: clear result

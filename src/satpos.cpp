@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iomanip>
 
+
 int SatPos::CalculateGPSPos(Ephemeris* &&GPSEph, Obs* &&obs, const SPPResult result)
 {
     for(int prn = 0; prn < MAXGPSSRN; ++prn)
@@ -69,7 +70,7 @@ int SatPos::CalculateGPSPos(Ephemeris* &&GPSEph, Obs* &&obs, const SPPResult res
         catch(...)
         {
             cout << "error happened when calculating GPS sat pos" << endl;
-            return -1;
+            return UNKNOWN_ERROR;
         }
     }
     return 0;
@@ -150,7 +151,7 @@ int SatPos::CalculateBDSPos(Ephemeris* && BDSEph, Obs* &&obs, const SPPResult re
         catch(...)
         {
             cout << "error happened while calculating BDS sat pos" << endl;
-            return -1;
+            return UNKNOWN_ERROR;
         }
         
     }
@@ -349,7 +350,7 @@ int SatPos::CalculateSatVel(Ephemeris* &&Eph, const NavSys flag, SPPResult resul
         param = this->Bds;
     }
     else
-        return 2;
+        return UNSUPPORTED_MSG;
 
     for(int prn = 0; prn < maxprn; ++prn)
     {
@@ -441,7 +442,7 @@ int SatPos::CalculateSatVel(Ephemeris* &&Eph, const NavSys flag, SPPResult resul
         catch(...)
         {
             cout << "error happened when calculate satellite velocity" << endl;
-            return -1;
+            return UNKNOWN_ERROR;
         }
         
     }
@@ -530,7 +531,7 @@ int SatPos::CalculateGEOVel(const double tk, const XYZ SatPosGK, const int prn, 
     catch(...)
     {
         cout << "error happened when calculate GEO vel" << endl;
-        return -1;
+        return UNKNOWN_ERROR;
     }
     
     return 0;
@@ -572,7 +573,7 @@ int SatPos::Calculatet(const Obs* ObsData, const Ephemeris* Eph,
     catch(...)
     {
         cout << "error happened when calculating t" << endl;
-        return -1;
+        return UNKNOWN_ERROR;
     }
     return 0;
 }
@@ -596,7 +597,7 @@ int SatPos::CalculateClkDif(const Ephemeris* Eph, const int prn, const SATTIME t
     catch(...)
     {
         cout << "error happened when calculation satellite clock difference" << endl;
-        return -1;
+        return UNKNOWN_ERROR;
     }
     
     double deltatr = F * Eph[prn].ecc * Eph[prn].sqrtA * sin(Ek);

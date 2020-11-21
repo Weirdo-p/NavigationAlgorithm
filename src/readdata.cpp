@@ -5,25 +5,39 @@
  * read the Reference Manual for OEM7
 ****************************************/
 #include "readdata.h"
+#include "coordinate.h"
 #include <iostream>
 #include <string.h>
 #include <math.h>
 #include <iomanip>
 
+int ReadDataFromFile::decode(FILE* file) {
+    int flag;
+    unsigned char HeadBuff[25];
+    flag = ReadHead(file, HeadBuff);
+    if(flag != 0) {
+        cout << "error happened with code " << flag << endl;
+        return flag;
+    }
+    flag = ReadMessage(file, HeadBuff);
+
+    // find neither eph nor obs
+    return flag;
+}
 
 int ReadDataFromFile::ReadHead(FILE* file, unsigned char* buff)
 {
     if(file == NULL)
     {
         cout << "open error" << endl;
-        return 1;
+        return OPEN_ERROR;
     }
 
     unsigned char HeadFlag[3];
     while(!feof(file))
     {
         if(!fread(&HeadFlag[2], 1, 1, file))
-            return 2;
+            return FILE_OR_BUFF_END;
 
         if(HeadFlag[0] != 0xaa || HeadFlag[1] != 0x44 || HeadFlag[2] != 0x12)
         {
@@ -32,7 +46,7 @@ int ReadDataFromFile::ReadHead(FILE* file, unsigned char* buff)
             continue;
         }
         if(!fread(buff, 25, 1, file))
-            return 2;
+            return FILE_OR_BUFF_END;
         int HeadLength = U2I((buff + 3), 1);
         try
         {
@@ -49,7 +63,7 @@ int ReadDataFromFile::ReadHead(FILE* file, unsigned char* buff)
         catch(...)
         {
             cout << "error happened when reading head" << endl;
-            return -1;
+            return UNKNOWN_ERROR;
         }
         break;
     }
@@ -59,7 +73,7 @@ int ReadDataFromFile::ReadHead(FILE* file, unsigned char* buff)
 
 int ReadDataFromFile::ReadMessage(FILE* file, unsigned char* HeadBuff)
 {
-    int flag = -1;
+    int flag = UNSUPPORTED_MSG;
     if(this->Head.MessageID == 7){
         // cout << "GPS   ";
         flag = this->ReadGPSEph(file, HeadBuff);
@@ -74,27 +88,54 @@ int ReadDataFromFile::ReadMessage(FILE* file, unsigned char* HeadBuff)
         flag = this->ReadObs(file, HeadBuff);
     }
 
+    if(Head.MessageID == 47) {
+        flag = this->ReadRefPos(file, HeadBuff);
+    }
+
+
     return flag;
 }
+int ReadDataFromFile::ReadRefPos(FILE* file, unsigned char* HeadBuff) {
+    if(Head.MessageID != 47)
+        return CONFLICT_ID;
+    
+    char* buff = new char[Head.MessageLength + 4];
+    if(!fread(buff, this->Head.MessageLength + 4, 1, file))
+        return FILE_OR_BUFF_END;
 
+    try {
+        if(!CRCCheck(HeadBuff, (unsigned char*)buff, Head.MessageLength, Head.MessageLength))
+            return CRC_FAILED;
+        UserPsrPos.B = C2D(buff + 8, 8);
+        UserPsrPos.L = C2D(buff + 16, 8);
+        UserPsrPos.H = C2D(buff + 24, 8);
+    } 
+    catch(...) {
+        cout << "error happened when reading GPS ehpe" << endl;
+        return UNKNOWN_ERROR;
+    }
+    
+    delete [] buff;
+   
+}
 int ReadDataFromFile::ReadGPSEph(FILE* file, unsigned char* HeadBuff)
 {
     if(this->Head.MessageID != 7)
-        return 6;
+        return CONFLICT_ID;
 
     char* buff = new char[this->Head.MessageLength + 4];
 
     if(!fread(buff, this->Head.MessageLength + 4, 1, file))
-        return 2;
+        return FILE_OR_BUFF_END;
 
     try
     {
-        if(!CRCCheck(HeadBuff, (unsigned char*)buff, Head.MessageLength, 224))
-            return 3;
+        if(!CRCCheck(HeadBuff, (unsigned char*)buff, Head.MessageLength, Head.MessageLength))
+            return CRC_FAILED;
 
         unsigned short int prn = U2I((unsigned char*)buff, 4) - 1;
         if(prn < 0 || prn > MAXGPSSRN)
-            return 4;
+            return INVALID_PRN;
         this->GPSEph[prn].PRN = prn + 1;
         this->GPSEph[prn].sys = GPS;
 
@@ -127,7 +168,7 @@ int ReadDataFromFile::ReadGPSEph(FILE* file, unsigned char* HeadBuff)
     catch(...)
     {
         cout << "error happened when reading GPS ehpe" << endl;
-        return -1;
+        return UNKNOWN_ERROR;
     }
     
     delete [] buff;
@@ -138,20 +179,20 @@ int ReadDataFromFile::ReadGPSEph(FILE* file, unsigned char* HeadBuff)
 int ReadDataFromFile::ReadBDSEph(FILE* file, unsigned char* HeadBuff)
 {
     if(Head.MessageID != 1696)
-        return 4;
+        return CONFLICT_ID;
     
     char* buff = new char [Head.MessageLength + 4];
     if(!fread(buff, this->Head.MessageLength + 4, 1, file))
-        return 2;
+        return FILE_OR_BUFF_END;
 
-    if(!CRCCheck(HeadBuff, (unsigned char*)buff, Head.MessageLength, 196))
-        return 3;
+    if(!CRCCheck(HeadBuff, (unsigned char*)buff, Head.MessageLength, Head.MessageLength))
+        return CRC_FAILED;
 
     try
     {
         unsigned short int prn = U2I((unsigned char*)buff, 4) - 1;
         if(prn < 0 || prn > MAXBDSSRN)
-            return 4;
+            return INVALID_PRN;
         this->BDSEph[prn].PRN = prn + 1;
         this->BDSEph[prn].sys = BDS;
 
@@ -184,7 +225,7 @@ int ReadDataFromFile::ReadBDSEph(FILE* file, unsigned char* HeadBuff)
     catch(...)
     {
         cout << "error happened when reading bds eph" << endl;
-        return -1;
+        return UNKNOWN_ERROR;
     }
     delete[] buff;
     return 0;
@@ -193,15 +234,16 @@ int ReadDataFromFile::ReadBDSEph(FILE* file, unsigned char* HeadBuff)
 int ReadDataFromFile::ReadObs(FILE* file, unsigned char* HeadBuff)
 {
     if(Head.MessageID != 43)
-        return 6;
+        return CONFLICT_ID;
 
     char* buff = new char [Head.MessageLength + 4];
     if(!fread(buff, this->Head.MessageLength + 4, 1, file))
-        return 2;
+        return FILE_OR_BUFF_END;
 
     int obsNum = U2I((unsigned char*)(buff), 4);
     if(!CRCCheck(HeadBuff, (unsigned char*)buff, Head.MessageLength, obsNum * 44 + 4))
-        return 3;
+        return CRC_FAILED;
+        
     for(int prn = 0; prn < MAXGPSSRN; ++prn){
         this->GPSObs[prn].psr[0] = -1;
         this->GPSObs[prn].psr[1] = -1;
@@ -305,7 +347,7 @@ int ReadDataFromSocket::OpenSocket(char* ip, int port, int &desc) {
     servaddr.sin_addr.s_addr = inet_addr(ip);
     if(connect(sock_cli, (sockaddr*)&servaddr, sizeof(servaddr)) < 0){
         perror("connect");
-        return -1;
+        return CONNECTION_FAILED;
     }
     return 0;
 }
@@ -333,7 +375,7 @@ int ReadDataFromSocket::ReadSocketData(BUFF &buff, int desc) {
     catch(...)
     {
         cout << "error happened when getting data from socket" << endl;
-        return -1;
+        return UNKNOWN_ERROR;
     } 
 }
 
@@ -365,7 +407,7 @@ int ReadDataFromSocket::ReadHead(BUFF &socketdata, unsigned char* buff) {
         catch(...)
         {
             cout << "error happened when reading head" << endl;
-            return -1;
+            return UNKNOWN_ERROR;
         }
         break;
     }
@@ -373,7 +415,7 @@ int ReadDataFromSocket::ReadHead(BUFF &socketdata, unsigned char* buff) {
 }
 
 int ReadDataFromSocket::ReadMessage(BUFF &socketdata, unsigned char* buff) {
-    int flag = -1;
+    int flag = UNSUPPORTED_MSG;
     if(this->Head.MessageID == 7){
         flag = this->ReadGPSEph(socketdata, buff);
         return flag;
@@ -388,16 +430,19 @@ int ReadDataFromSocket::ReadMessage(BUFF &socketdata, unsigned char* buff) {
         flag = this->ReadObs(socketdata, buff);
         return flag;
     }
-    return -2;  
+    if(Head.MessageID == 47) {
+        // flag = this->ReadRefPos(file, HeadBuff);
+    }
+    return flag;  
 }
 
 int ReadDataFromSocket::ReadObs(BUFF &socketdata, unsigned char* HeadBuff) {
     if(Head.MessageID != 43)
-        return 4;
+        return INVALID_PRN;
     if(socketdata.len - socketdata.pos < Head.MessageLength) {
         socketdata.pos -= 28;
         // reset(socketdata, pos);
-        return 2;
+        return FILE_OR_BUFF_END;
     }
     char* buff = new char [Head.MessageLength + 4];
     memcpy(buff, socketdata.buff + socketdata.pos, Head.MessageLength + 4);
@@ -406,7 +451,7 @@ int ReadDataFromSocket::ReadObs(BUFF &socketdata, unsigned char* HeadBuff) {
     int obsNum = U2I((unsigned char*)(buff), 4);
     if(!CRCCheck(HeadBuff, (unsigned char*)buff, Head.MessageLength, Head.MessageLength)){
         delete[] buff;
-        return 3;
+        return CRC_FAILED;
     }
 
     for(int prn = 0; prn < MAXGPSSRN; ++prn){
@@ -493,7 +538,7 @@ int ReadDataFromSocket::ReadObs(BUFF &socketdata, unsigned char* HeadBuff) {
     catch(...)
     {
         cout << "error happened when reading obs" << endl;
-        return -1;
+        return UNKNOWN_ERROR;
     }
     delete[] buff;
     return 0;
@@ -503,12 +548,12 @@ int ReadDataFromSocket::ReadObs(BUFF &socketdata, unsigned char* HeadBuff) {
 int ReadDataFromSocket::ReadGPSEph(BUFF &socketdata, unsigned char* HeadBuff)
 {
     if(this->Head.MessageID != 7)
-        return 4;
+        return CONFLICT_ID;
 
     if(socketdata.len - socketdata.pos < Head.MessageLength) {
         socketdata.pos -= 28;
         // reset(socketdata, pos);
-        return 2;
+        return FILE_OR_BUFF_END;
     }
     char* buff = new char [Head.MessageLength + 4];
     memcpy(buff, socketdata.buff + socketdata.pos, Head.MessageLength + 4);
@@ -518,12 +563,12 @@ int ReadDataFromSocket::ReadGPSEph(BUFF &socketdata, unsigned char* HeadBuff)
 
         if(!CRCCheck(HeadBuff, (unsigned char*)buff, Head.MessageLength, Head.MessageLength)) {
             delete[] buff;
-            return 3;
+            return CRC_FAILED;
         }
         unsigned short int prn = U2I((unsigned char*)buff, 4) - 1;
         // cout << prn << endl;
         if(prn < 0 || prn > MAXGPSSRN)
-            return 4;
+            return INVALID_PRN;
         this->GPSEph[prn].PRN = prn + 1;
         this->GPSEph[prn].sys = GPS;
 
@@ -557,7 +602,7 @@ int ReadDataFromSocket::ReadGPSEph(BUFF &socketdata, unsigned char* HeadBuff)
     catch(...)
     {
         cout << "error happened when reading GPS ehpe" << endl;
-        return -1;
+        return UNKNOWN_ERROR;
     }
     
     delete [] buff;
@@ -567,19 +612,19 @@ int ReadDataFromSocket::ReadGPSEph(BUFF &socketdata, unsigned char* HeadBuff)
 
 int ReadDataFromSocket::ReadBDSEph(BUFF &socketdata, unsigned char* HeadBuff) {
     if(Head.MessageID != 1696)
-        return 4;
+        return CONFLICT_ID;
     
     char* buff = new char [Head.MessageLength + 4];
     if(socketdata.len - socketdata.pos < Head.MessageLength) {
         socketdata.pos -= 28;
         // reset(socketdata, pos);
-        return 2;
+        return FILE_OR_BUFF_END;
     }
     memcpy(buff, socketdata.buff + socketdata.pos, Head.MessageLength + 4);
     socketdata.pos += Head.MessageLength + 4;
     if(!CRCCheck(HeadBuff, (unsigned char*)buff, Head.MessageLength, 196)) {
         delete[] buff;
-        return 3;
+        return CRC_FAILED;
     }
     // cout << "BDS   " << endl;
     try
@@ -587,7 +632,7 @@ int ReadDataFromSocket::ReadBDSEph(BUFF &socketdata, unsigned char* HeadBuff) {
         unsigned short int prn = U2I((unsigned char*)buff, 4) - 1;
         // cout << prn << endl;
         if(prn < 0 || prn > MAXBDSSRN)
-            return 4;
+            return INVALID_PRN;
         this->BDSEph[prn].PRN = prn + 1;
         this->BDSEph[prn].sys = BDS;
 
@@ -621,7 +666,7 @@ int ReadDataFromSocket::ReadBDSEph(BUFF &socketdata, unsigned char* HeadBuff) {
     catch(...)
     {
         cout << "error happened when reading bds eph" << endl;
-        return -1;
+        return UNSUPPORTED_MSG;
     }
     delete[] buff;
     return 0;
@@ -802,4 +847,54 @@ Ephemeris* ReadDataFromSocket::GetGPSEph()
 FileHead ReadDataFromSocket::GetHead()
 {
     return Head;
+}
+
+int ReadDataFromSocket::decode(int desc) {
+    BUFF databuff;
+    int flag;
+
+    cout << "waiting for data ..." << endl;
+    
+    flag = ReadSocketData(databuff, desc);
+    if(flag != 0)
+        return flag;
+
+    unsigned char headbuff[25];
+    flag = ReadHead(databuff, headbuff);
+    if(flag != 0)
+        return flag;
+
+    flag = ReadMessage(databuff, headbuff);
+    return flag;
+}
+
+int ReadDataFromSocket::ReadRefPos(BUFF &socketdata) {
+    if(Head.MessageID != 47)
+        return CONFLICT_ID;
+    
+    char* buff = new char [Head.MessageLength + 4];
+    if(socketdata.len - socketdata.pos < Head.MessageLength) {
+        socketdata.pos -= 28;
+        // reset(socketdata, pos);
+        return FILE_OR_BUFF_END;
+    }
+    memcpy(buff, socketdata.buff + socketdata.pos, Head.MessageLength + 4);
+    socketdata.pos += Head.MessageLength + 4;
+    if(!CRCCheck(HeadBuff, (unsigned char*)buff, Head.MessageLength, Head.MessageLength)) {
+        delete[] buff;
+        return CRC_FAILED;
+    }
+
+    try {
+        UserPsrPos.B = C2D(buff + 8, 8);
+        UserPsrPos.L = C2D(buff + 16, 8);
+        UserPsrPos.H = C2D(buff + 24, 8);
+    } 
+    catch(...) {
+        cout << "error happened when reading GPS ehpe" << endl;
+        return UNKNOWN_ERROR;
+    }
+    
+    delete [] buff;
+    
 }

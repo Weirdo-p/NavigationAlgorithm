@@ -216,13 +216,14 @@ public:
     ********************************************************/
     void CalculateGEOEPos(const double tk, const double omegak, const double ik, const XYZ OrbPos, int prn, XYZ &Epos);
 
-
     /***************************************************
      * function: to get satellite position and velocity
      * @param flag      system flag
      * @return          satellite position and velocity
     ***************************************************/
     Satellite* GetPosAndVel(NavSys flag);
+
+    int solve();
 /* calculate result */
 protected:
     Satellite Gps[MAXGPSSRN];
