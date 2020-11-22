@@ -588,7 +588,6 @@ Matrix<Type, _0, _1> Matrix<Type, _0, _1>::inverse(int &flag)
     // 且将上三角置为0
     for(int i = copy.row() - 1; i > -1; --i)
     {
-
         Type temp = copy.operator()(i, i);
         if(abs(temp) <= 1e-15)
         {

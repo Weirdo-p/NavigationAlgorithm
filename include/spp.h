@@ -16,6 +16,7 @@
 // 得到测站概率位置后将测站和卫星转换到站心坐标系计算高度角
 // 根据高度角计算对流层改正、根据测站位置计算信号传播时间，计算地球自传改正
 // 迭代直到测站坐标改正数变化不明显
+
 class SPP
 {
 public:
@@ -85,7 +86,7 @@ public:
      * @param   decoder     data
      * @return  status code
     *******************************/
-    int solve(ReadDataFromFile decoder);
+    int solve(ReadData decoder);
 
     /*************************
      * function: clear result

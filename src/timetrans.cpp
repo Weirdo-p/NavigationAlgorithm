@@ -3,7 +3,6 @@
  * definition of time transformation
  * 2020 09 19
 *************************************/
-
 #include "timetrans.h"
 #include "common.h"
 #include <iomanip>

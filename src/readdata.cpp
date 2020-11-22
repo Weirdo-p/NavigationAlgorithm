@@ -11,7 +11,7 @@
 #include <math.h>
 #include <iomanip>
 
-int ReadDataFromFile::decode(FILE* file) {
+int ReadData::decode(FILE* file) {
     int flag;
     unsigned char HeadBuff[25];
     flag = ReadHead(file, HeadBuff);
@@ -25,7 +25,7 @@ int ReadDataFromFile::decode(FILE* file) {
     return flag;
 }
 
-int ReadDataFromFile::ReadHead(FILE* file, unsigned char* buff)
+int ReadData::ReadHead(FILE* file, unsigned char* buff)
 {
     if(file == NULL)
     {
@@ -71,7 +71,7 @@ int ReadDataFromFile::ReadHead(FILE* file, unsigned char* buff)
     return 0;
 }
 
-int ReadDataFromFile::ReadMessage(FILE* file, unsigned char* HeadBuff)
+int ReadData::ReadMessage(FILE* file, unsigned char* HeadBuff)
 {
     int flag = UNSUPPORTED_MSG;
     if(this->Head.MessageID == 7){
@@ -95,7 +95,7 @@ int ReadDataFromFile::ReadMessage(FILE* file, unsigned char* HeadBuff)
 
     return flag;
 }
-int ReadDataFromFile::ReadRefPos(FILE* file, unsigned char* HeadBuff) {
+int ReadData::ReadRefPos(FILE* file, unsigned char* HeadBuff) {
     if(Head.MessageID != 47)
         return CONFLICT_ID;
     
@@ -118,7 +118,7 @@ int ReadDataFromFile::ReadRefPos(FILE* file, unsigned char* HeadBuff) {
     delete [] buff;
    
 }
-int ReadDataFromFile::ReadGPSEph(FILE* file, unsigned char* HeadBuff)
+int ReadData::ReadGPSEph(FILE* file, unsigned char* HeadBuff)
 {
     if(this->Head.MessageID != 7)
         return CONFLICT_ID;
@@ -176,7 +176,7 @@ int ReadDataFromFile::ReadGPSEph(FILE* file, unsigned char* HeadBuff)
     return 0;
 }
 
-int ReadDataFromFile::ReadBDSEph(FILE* file, unsigned char* HeadBuff)
+int ReadData::ReadBDSEph(FILE* file, unsigned char* HeadBuff)
 {
     if(Head.MessageID != 1696)
         return CONFLICT_ID;
@@ -231,7 +231,7 @@ int ReadDataFromFile::ReadBDSEph(FILE* file, unsigned char* HeadBuff)
     return 0;
 }
 
-int ReadDataFromFile::ReadObs(FILE* file, unsigned char* HeadBuff)
+int ReadData::ReadObs(FILE* file, unsigned char* HeadBuff)
 {
     if(Head.MessageID != 43)
         return CONFLICT_ID;
@@ -333,7 +333,7 @@ int ReadDataFromFile::ReadObs(FILE* file, unsigned char* HeadBuff)
     
 }
 
-int ReadDataFromSocket::OpenSocket(char* ip, int port, int &desc) {
+int ReadData::OpenSocket(char* ip, int port, int &desc) {
     // pos是当前数据流处理到的位置
     // 打开端口在循环开始，若此时原来buff中仍然有数据
     // 应该将剩余数据移动到buff开始
@@ -352,7 +352,7 @@ int ReadDataFromSocket::OpenSocket(char* ip, int port, int &desc) {
     return 0;
 }
 
-int ReadDataFromSocket::ReadSocketData(BUFF &buff, int desc) {
+int ReadData::ReadSocketData(BUFF &buff, int desc) {
     // 将数据先读入缓冲区
     if(buff.pos != 0)
         reset(buff);
@@ -379,7 +379,7 @@ int ReadDataFromSocket::ReadSocketData(BUFF &buff, int desc) {
     } 
 }
 
-int ReadDataFromSocket::ReadHead(BUFF &socketdata, unsigned char* buff) {
+int ReadData::ReadHead(BUFF &socketdata, unsigned char* buff) {
     unsigned char HeadFlag[3];
     for(int i = socketdata.pos; i < socketdata.len; ++i) {
         HeadFlag[2] = socketdata.buff[i];
@@ -414,7 +414,7 @@ int ReadDataFromSocket::ReadHead(BUFF &socketdata, unsigned char* buff) {
     return 0;
 }
 
-int ReadDataFromSocket::ReadMessage(BUFF &socketdata, unsigned char* buff) {
+int ReadData::ReadMessage(BUFF &socketdata, unsigned char* buff) {
     int flag = UNSUPPORTED_MSG;
     if(this->Head.MessageID == 7){
         flag = this->ReadGPSEph(socketdata, buff);
@@ -431,14 +431,14 @@ int ReadDataFromSocket::ReadMessage(BUFF &socketdata, unsigned char* buff) {
         return flag;
     }
     if(Head.MessageID == 47) {
-        // flag = this->ReadRefPos(file, HeadBuff);
+        flag = this->ReadRefPos(socketdata, buff);
     }
     return flag;  
 }
 
-int ReadDataFromSocket::ReadObs(BUFF &socketdata, unsigned char* HeadBuff) {
+int ReadData::ReadObs(BUFF &socketdata, unsigned char* HeadBuff) {
     if(Head.MessageID != 43)
-        return INVALID_PRN;
+        return CONFLICT_ID;
     if(socketdata.len - socketdata.pos < Head.MessageLength) {
         socketdata.pos -= 28;
         // reset(socketdata, pos);
@@ -545,7 +545,7 @@ int ReadDataFromSocket::ReadObs(BUFF &socketdata, unsigned char* HeadBuff) {
     
 }
 
-int ReadDataFromSocket::ReadGPSEph(BUFF &socketdata, unsigned char* HeadBuff)
+int ReadData::ReadGPSEph(BUFF &socketdata, unsigned char* HeadBuff)
 {
     if(this->Head.MessageID != 7)
         return CONFLICT_ID;
@@ -560,7 +560,6 @@ int ReadDataFromSocket::ReadGPSEph(BUFF &socketdata, unsigned char* HeadBuff)
     socketdata.pos += Head.MessageLength + 4;
     try
     {
-
         if(!CRCCheck(HeadBuff, (unsigned char*)buff, Head.MessageLength, Head.MessageLength)) {
             delete[] buff;
             return CRC_FAILED;
@@ -610,7 +609,7 @@ int ReadDataFromSocket::ReadGPSEph(BUFF &socketdata, unsigned char* HeadBuff)
     return 0;
 }
 
-int ReadDataFromSocket::ReadBDSEph(BUFF &socketdata, unsigned char* HeadBuff) {
+int ReadData::ReadBDSEph(BUFF &socketdata, unsigned char* HeadBuff) {
     if(Head.MessageID != 1696)
         return CONFLICT_ID;
     
@@ -673,7 +672,7 @@ int ReadDataFromSocket::ReadBDSEph(BUFF &socketdata, unsigned char* HeadBuff) {
 }
 
 
-int ReadDataFromSocket::reset(BUFF &buff) {
+int ReadData::reset(BUFF &buff) {
     for(int i = buff.pos; i < buff.len; ++i)
         buff.buff[i - buff.pos] = buff.buff[i];
     buff.pos = buff.len - buff.pos;
@@ -766,7 +765,7 @@ bool CRCCheck(unsigned char* Head, unsigned char* Message, int MessageLength, in
         return false;
 }
 
-int ReadDataFromSocket::ResetObs() {
+int ReadData::ResetObs() {
     for(int i = 0; i < MAXBDSSRN; ++i) {
         this->BDSObs[i].psr[0] = -1;
         this->BDSObs[i].psr[1] = -1;
@@ -782,79 +781,37 @@ int ReadDataFromSocket::ResetObs() {
     return 0;
 }
 
-int ReadDataFromFile::ResetObs() {
-    for(int i = 0; i < MAXBDSSRN; ++i) {
-        this->BDSObs[i].psr[0] = -1;
-        this->BDSObs[i].psr[1] = -1;
-        this->BDSObs[i].ObsTime.Week = 0;
-        this->BDSObs[i].ObsTime.SOW = -1;
-    }
-    for(int i = 0; i < MAXGPSSRN; ++i) {
-        this->GPSObs[i].psr[0] = -1;
-        this->GPSObs[i].psr[1] = -1;
-        this->GPSObs[i].ObsTime.Week = 0;
-        this->GPSObs[i].ObsTime.SOW = -1;
-    }
-    return 0;
-}
 
-Obs* ReadDataFromFile::GetBDSObs()
-{
-    return BDSObs;
-}
-
-Obs* ReadDataFromFile::GetGPSObs()
-{
-    return GPSObs;
-}
-
-Ephemeris* ReadDataFromFile::GetBDSEph()
-{
-    return BDSEph;
-}
-
-Ephemeris* ReadDataFromFile::GetGPSEph()
-{
-    return GPSEph;
-}
-
-FileHead ReadDataFromFile::GetHead()
+FileHead ReadData::GetHead()
 {
     return Head;
 }
 
 
-Obs* ReadDataFromSocket::GetBDSObs()
+Obs* ReadData::GetBDSObs()
 {
     return BDSObs;
 }
 
-Obs* ReadDataFromSocket::GetGPSObs()
+Obs* ReadData::GetGPSObs()
 {
     return GPSObs;
 }
 
-Ephemeris* ReadDataFromSocket::GetBDSEph()
+Ephemeris* ReadData::GetBDSEph()
 {
     return BDSEph;
 }
 
-Ephemeris* ReadDataFromSocket::GetGPSEph()
+Ephemeris* ReadData::GetGPSEph()
 {
     return GPSEph;
 }
 
-FileHead ReadDataFromSocket::GetHead()
-{
-    return Head;
-}
 
-int ReadDataFromSocket::decode(int desc) {
-    BUFF databuff;
+int ReadData::decode(int desc) {
     int flag;
 
-    cout << "waiting for data ..." << endl;
-    
     flag = ReadSocketData(databuff, desc);
     if(flag != 0)
         return flag;
@@ -868,14 +825,13 @@ int ReadDataFromSocket::decode(int desc) {
     return flag;
 }
 
-int ReadDataFromSocket::ReadRefPos(BUFF &socketdata) {
+int ReadData::ReadRefPos(BUFF &socketdata, unsigned char* HeadBuff) {
     if(Head.MessageID != 47)
         return CONFLICT_ID;
     
     char* buff = new char [Head.MessageLength + 4];
     if(socketdata.len - socketdata.pos < Head.MessageLength) {
         socketdata.pos -= 28;
-        // reset(socketdata, pos);
         return FILE_OR_BUFF_END;
     }
     memcpy(buff, socketdata.buff + socketdata.pos, Head.MessageLength + 4);
@@ -895,6 +851,9 @@ int ReadDataFromSocket::ReadRefPos(BUFF &socketdata) {
         return UNKNOWN_ERROR;
     }
     
-    delete [] buff;
-    
+    delete [] buff;  
+}
+
+BLH ReadData::GetUserPos() {
+    return this->UserPsrPos;
 }

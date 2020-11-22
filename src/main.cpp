@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
             cout << "open file error" << endl;
             exit(-1);
         }
-        ReadDataFromFile decoder;
+        ReadData decoder;
         while(!feof(file)) {
             int flag = decoder.decode(file);
             if(flag != 0) 
@@ -64,12 +64,12 @@ int main(int argc, char** argv) {
         tmp >> port;
         char* ip = argv[2];
 
-        ReadDataFromSocket decoder;
+        ReadData decoder;
         int desc = 0;
         int flag = decoder.OpenSocket(ip, port, desc);
         if(flag != 0)
             return flag;
-        BUFF databuff;
+        cout << "waiting for data ..." << endl;
         while (true) {
             flag = decoder.decode(desc);
             if(flag != 0)
@@ -85,4 +85,5 @@ int main(int argc, char** argv) {
         cout << "Usage: -i [IP address] [port]\n       -f [Binary File Path]" << endl;
         return 1;
     }
+    
 }

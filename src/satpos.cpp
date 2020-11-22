@@ -2,7 +2,6 @@
 #include <fstream>
 #include <iomanip>
 
-
 int SatPos::CalculateGPSPos(Ephemeris* &&GPSEph, Obs* &&obs, const SPPResult result)
 {
     for(int prn = 0; prn < MAXGPSSRN; ++prn)

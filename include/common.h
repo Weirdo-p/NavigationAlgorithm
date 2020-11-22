@@ -141,7 +141,7 @@ struct BLH
 {
     double B;
     double L;
-    double H;
+    double H = 0;
 
     BLH();
 
@@ -318,11 +318,7 @@ int WriteToFile(SPPResult result, string path = "./");
 // declare
 class SatPos;
 class SPP;
-class ReadDataFromFile;
-class ReadDataFromSocket;
+class ReadData;
 
-int solve(SatPos &satposSolver, SPP &sppSolver, ReadDataFromFile &decoder, ELLIPSOID type, string path = "./");
-
-int solve(SatPos &satposSolver, SPP &sppSolver, ReadDataFromSocket &decoder, ELLIPSOID type, string path = "./");
-
+int solve(SatPos &satposSolver, SPP &sppSolver, ReadData &decoder, ELLIPSOID type, string path = "./");
 #endif

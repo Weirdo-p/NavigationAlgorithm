@@ -120,4 +120,5 @@ bool GPST2BDST(const SATTIME gpst, SATTIME &bdst);
 ***************************************/
 bool BDST2GPST(const SATTIME bdst, SATTIME &gpst);
 
+
 #endif

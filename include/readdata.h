@@ -22,8 +22,110 @@
 /*********************************
  * should position epoch by epoch
 *********************************/
-class ReadDataFromFile
+class ReadData
 {
+    // read data from socket
+    public:
+    /***************************************
+     * function: to connect with web server
+     * @param       ip      [in]  IP address
+     * @param       port    [oin] port
+     * @param       desc    [out] flag num
+     * @return              status code
+    ***************************************/
+    int OpenSocket(char* ip, int port, int &desc);
+
+    /********************************************
+     * function: to copy data from socket buffer
+     * @param       buff    [out] data buff
+     * @param       desc    [in]  socket num
+     * @return              status code
+    ********************************************/
+    int ReadSocketData(BUFF &buff, int desc);
+
+    /*********************************************************
+     * function: a message must begin with
+     * 0xAA 0x44 0x12 if finding the beginning,
+     * return true.
+     * else if meeting with eof or other error
+     * return false
+     * @param socketdata [out] to store head without aa4412
+     * @return 0         successfully find the head
+     *         1         open file error
+     *         2         file ending
+     *         3         crc wrong
+     *         4         other errors
+    *********************************************************/
+    int ReadHead(BUFF &socketdata, unsigned char* head);
+
+    /******************************************************
+     * to read bds eph
+     * @param socketdata    [in] using it to check CRC
+     * @return 1            open file error
+     *         2            file ending
+     *         3            crc wrong
+     *         4            other errors
+     *         5            find Eph
+     *         6            find Obs
+    *******************************************************/
+    int ReadMessage(BUFF &socketdata, unsigned char* buff);
+
+    /***************************************************
+     * to read gps eph
+     * @param socketdata    [in] using it to CRC
+     * @return 0            successfully find the head
+     *         1            open file error
+     *         2            file ending
+     *         3            crc wrong
+     *         4            other errors
+    ****************************************************/
+    int ReadGPSEph(BUFF &socketdata, unsigned char* buff);
+
+    /***************************************************
+     * to read bds eph
+     * @param socketdata    [in] using it to check CRC
+     * @return 0            successfully find the head
+     *         1            open file error
+     *         2            file ending
+     *         3            crc wrong
+     *         4            other errors
+    ***************************************************/
+    int ReadBDSEph(BUFF &socketdata, unsigned char* buff);
+
+    /***************************************************
+     * to read bds eph
+     * @param socketdata    [in] using it to check CRC
+     * @return 1            open file error
+     *         2            file ending
+     *         3            crc wrong
+     *         4            other errors
+     *         5            find GPS OBS
+     *         6            find BDS OBS
+    ***************************************************/
+    int ReadObs(BUFF &socketdata, unsigned char* HeadBuff);
+
+    /*****************************************
+     * function: to abandon old data stream
+     * @param   socketdata
+     * @return  status code
+    *****************************************/
+    int reset(BUFF &socketdata);
+
+    /******************************
+     * function: to read ref pos
+     * @param   socketdata
+     * @return  status code
+    ******************************/
+    int ReadRefPos(BUFF &socketdata, unsigned char* HeadBuff);
+
+    /*************************************************
+     * function: read data from specific ip address
+     * @param desc  identifier with socket
+     * @return      status code
+    *************************************************/
+    int decode(int desc);
+
+    // read data from file
     public:
     /*********************************************
      * function: a message must begin with
@@ -136,6 +238,8 @@ class ReadDataFromFile
     **********************************/
     int decode(FILE* file);
 
+    BLH GetUserPos();
+
     protected:
     // observations
     Obs             BDSObs[MAXBDSSRN];
@@ -147,161 +251,161 @@ class ReadDataFromFile
 
     // head infomation
     FileHead        Head;
+    BUFF            databuff;
 
     unsigned char   HeadBuff[25];
 
     BLH             UserPsrPos;
 };
 
-class ReadDataFromSocket {
-public:
-    /***************************************
-     * function: to connect with web server
-     * @param       ip      [in]  IP address
-     * @param       port    [oin] port
-     * @param       desc    [out] flag num
-     * @return              status code
-    ***************************************/
-    int OpenSocket(char* ip, int port, int &desc);
+// class ReadDataFromSocket {
+// public:
+//     /***************************************
+//      * function: to connect with web server
+//      * @param       ip      [in]  IP address
+//      * @param       port    [oin] port
+//      * @param       desc    [out] flag num
+//      * @return              status code
+//     ***************************************/
+//     int OpenSocket(char* ip, int port, int &desc);
 
-    /********************************************
-     * function: to copy data from socket buffer
-     * @param       buff    [out] data buff
-     * @param       desc    [in]  socket num
-     * @return              status code
-    ********************************************/
-    int ReadSocketData(BUFF &buff, int desc);
+//     /********************************************
+//      * function: to copy data from socket buffer
+//      * @param       buff    [out] data buff
+//      * @param       desc    [in]  socket num
+//      * @return              status code
+//     ********************************************/
+//     int ReadSocketData(BUFF &buff, int desc);
 
-    /***********************************
-     * to reset observations every time
-     * SPP and SPV is done
-    ***********************************/
-    int ResetObs();
+//     /***********************************
+//      * to reset observations every time
+//      * SPP and SPV is done
+//     ***********************************/
+//     int ResetObs();
+//     /*********************************************************
+//      * function: a message must begin with
+//      * 0xAA 0x44 0x12 if finding the beginning,
+//      * return true.
+//      * else if meeting with eof or other error
+//      * return false
+//      * @param socketdata [out] to store head without aa4412
+//      * @return 0         successfully find the head
+//      *         1         open file error
+//      *         2         file ending
+//      *         3         crc wrong
+//      *         4         other errors
+//     *********************************************************/
+//     int ReadHead(BUFF &socketdata, unsigned char* head);
 
-    /*********************************************************
-     * function: a message must begin with
-     * 0xAA 0x44 0x12 if finding the beginning,
-     * return true.
-     * else if meeting with eof or other error
-     * return false
-     * @param socketdata [out] to store head without aa4412
-     * @return 0         successfully find the head
-     *         1         open file error
-     *         2         file ending
-     *         3         crc wrong
-     *         4         other errors
-    *********************************************************/
-    int ReadHead(BUFF &socketdata, unsigned char* head);
+//     /******************************************************
+//      * to read bds eph
+//      * @param socketdata    [in] using it to check CRC
+//      * @return 1            open file error
+//      *         2            file ending
+//      *         3            crc wrong
+//      *         4            other errors
+//      *         5            find Eph
+//      *         6            find Obs
+//     *******************************************************/
+//     int ReadMessage(BUFF &socketdata, unsigned char* buff);
 
-    /******************************************************
-     * to read bds eph
-     * @param socketdata    [in] using it to check CRC
-     * @return 1            open file error
-     *         2            file ending
-     *         3            crc wrong
-     *         4            other errors
-     *         5            find Eph
-     *         6            find Obs
-    *******************************************************/
-    int ReadMessage(BUFF &socketdata, unsigned char* buff);
+//     /***************************************************
+//      * to read gps eph
+//      * @param socketdata    [in] using it to CRC
+//      * @return 0            successfully find the head
+//      *         1            open file error
+//      *         2            file ending
+//      *         3            crc wrong
+//      *         4            other errors
+//     ****************************************************/
+//     int ReadGPSEph(BUFF &socketdata, unsigned char* buff);
 
-    /***************************************************
-     * to read gps eph
-     * @param socketdata    [in] using it to CRC
-     * @return 0            successfully find the head
-     *         1            open file error
-     *         2            file ending
-     *         3            crc wrong
-     *         4            other errors
-    ****************************************************/
-    int ReadGPSEph(BUFF &socketdata, unsigned char* buff);
+//     /***************************************************
+//      * to read bds eph
+//      * @param socketdata    [in] using it to check CRC
+//      * @return 0            successfully find the head
+//      *         1            open file error
+//      *         2            file ending
+//      *         3            crc wrong
+//      *         4            other errors
+//     ***************************************************/
+//     int ReadBDSEph(BUFF &socketdata, unsigned char* buff);
 
-    /***************************************************
-     * to read bds eph
-     * @param socketdata    [in] using it to check CRC
-     * @return 0            successfully find the head
-     *         1            open file error
-     *         2            file ending
-     *         3            crc wrong
-     *         4            other errors
-    ***************************************************/
-    int ReadBDSEph(BUFF &socketdata, unsigned char* buff);
+//     /***************************************************
+//      * to read bds eph
+//      * @param socketdata    [in] using it to check CRC
+//      * @return 1            open file error
+//      *         2            file ending
+//      *         3            crc wrong
+//      *         4            other errors
+//      *         5            find GPS OBS
+//      *         6            find BDS OBS
+//     ***************************************************/
+//     int ReadObs(BUFF &socketdata, unsigned char* HeadBuff);
 
-    /***************************************************
-     * to read bds eph
-     * @param socketdata    [in] using it to check CRC
-     * @return 1            open file error
-     *         2            file ending
-     *         3            crc wrong
-     *         4            other errors
-     *         5            find GPS OBS
-     *         6            find BDS OBS
-    ***************************************************/
-    int ReadObs(BUFF &socketdata, unsigned char* HeadBuff);
+//     /*****************************************
+//      * function: to abandon old data stream
+//      * @param   socketdata
+//      * @return  status code
+//     *****************************************/
+//     int reset(BUFF &socketdata);
 
-    /*****************************************
-     * function: to abandon old data stream
-     * @param   socketdata
-     * @return  status code
-    *****************************************/
-    int reset(BUFF &socketdata);
+//     /******************************
+//      * function: to read ref pos
+//      * @param   socketdata
+//      * @return  status code
+//     ******************************/
+//     int ReadRefPos(BUFF &socketdata);
 
-    /******************************
-     * function: to read ref pos
-     * @param   socketdata
-     * @return  status code
-    ******************************/
-    int ReadRefPos(BUFF &socketdata);
+//     /*************************************************
+//      * function: read data from specific ip address
+//      * @param desc  identifier with socket
+//      * @return      status code
+//     *************************************************/
+//     int decode(int desc);
+// public:
+//     /**************************
+//      * to get BDS observations
+//      * @return BDS Obs
+//     **************************/
+//     Obs* GetBDSObs();
 
-    /*************************************************
-     * function: read data from specific ip address
-     * @param desc  identifier with socket
-     * @return      status code
-    *************************************************/
-    int decode(int desc);
-public:
-    /**************************
-     * to get BDS observations
-     * @return BDS Obs
-    **************************/
-    Obs* GetBDSObs();
+//     /**************************
+//      * to get GPS observations
+//      * @return GPS Obs
+//     **************************/
+//     Obs* GetGPSObs();
 
-    /**************************
-     * to get GPS observations
-     * @return GPS Obs
-    **************************/
-    Obs* GetGPSObs();
+//     /*************************
+//      * to get BDS Ephemris
+//      * @return BDS Ephemeris
+//     *************************/
+//     Ephemeris* GetBDSEph();
 
-    /*************************
-     * to get BDS Ephemris
-     * @return BDS Ephemeris
-    *************************/
-    Ephemeris* GetBDSEph();
+//     /*************************
+//      * to get GPS Ephemris
+//      * @return GPS Ephemeris
+//     *************************/
+//     Ephemeris* GetGPSEph();
 
-    /*************************
-     * to get GPS Ephemris
-     * @return GPS Ephemeris
-    *************************/
-    Ephemeris* GetGPSEph();
+//     /***************************
+//      * to get Head information
+//      * @return Head Infomation
+//     ***************************/
+//     FileHead GetHead();
+// protected:
+//     Obs             BDSObs[MAXBDSSRN];
+//     Obs             GPSObs[MAXGPSSRN];
 
-    /***************************
-     * to get Head information
-     * @return Head Infomation
-    ***************************/
-    FileHead GetHead();
-protected:
-    Obs             BDSObs[MAXBDSSRN];
-    Obs             GPSObs[MAXGPSSRN];
+//     Ephemeris       GPSEph[MAXGPSSRN];
+//     Ephemeris       BDSEph[MAXBDSSRN];
 
-    Ephemeris       GPSEph[MAXGPSSRN];
-    Ephemeris       BDSEph[MAXBDSSRN];
+//     FileHead        Head;
 
-    FileHead        Head;
+//     unsigned char   HeadBuff[25];
 
-    unsigned char   HeadBuff[25];
-
-    BLH             UserPsrPos;
-};
+//     BLH             UserPsrPos;
+// };
 
 /********************************************
  * function: to decode unsigned char to int

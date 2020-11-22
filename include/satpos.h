@@ -231,4 +231,5 @@ protected:
     Satellite Bds[MAXBDSSRN];
 };
 
+
 #endif
