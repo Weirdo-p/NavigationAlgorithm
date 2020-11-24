@@ -285,138 +285,126 @@ int SPP::solveSPV(Satellite* &&GPSPosAndVel, Satellite* &&BDSPosAndVel,
     int count = 0;
     // cout << GPSObsNum << endl;
     double R = 0;
-    while(count < 10)
+    int num = 0;
+    for(int prn = 0; prn < MAXGPSSRN; ++prn)
     {
-        int num = 0;
-        for(int prn = 0; prn < MAXGPSSRN; ++prn)
-        {
-            if(GPSObsNum == 0)
-                break;
-            if(GPSPosAndVel[prn].n == -1 ||
-               GPSObs[prn].dopp[0] == -1)
-                continue;
+        if(GPSObsNum == 0)
+            break;
+        if(GPSPosAndVel[prn].n == -1 ||
+            GPSObs[prn].dopp[0] == -1)
+            continue;
 
-            XYZ fix = GPSPosAndVel[prn].SatVelocity;
-            // 在SPP时已经自转改正  故不需要再次改正
-            XYZ SatPosi = this->result.GPSPosi[prn];
+        XYZ fix = GPSPosAndVel[prn].SatVelocity;
+        // 在SPP时已经自转改正  故不需要再次改正
+        XYZ SatPosi = this->result.GPSPosi[prn];
+        XYZ pos = this->result.UserPositionXYZ;
+        double rou = dist(SatPosi, pos);
+        // double rou = this->result.GPSDist[prn];
+        double l = (-SatPosi.X + RefPos.X) / rou; 
+        double m = (-SatPosi.Y + RefPos.Y) / rou;
+        double n = (-SatPosi.Z + RefPos.Z) / rou;
 
-            double rou = this->result.GPSDist[prn];
-            double l = (-SatPosi.X + RefPos.X) / rou; 
-            double m = (-SatPosi.Y + RefPos.Y) / rou;
-            double n = (-SatPosi.Z + RefPos.Z) / rou;
+        double deltatdot = GPSPosAndVel[prn].clkdot;//GPSEph[prn].af1 + 2 * GPSEph[prn].af2 *
+                            //(GPSPosAndVel[prn].t - GPSPosAndVel[prn].deltat - GPSEph[prn].toc);
 
-            double deltatdot = GPSEph[prn].af1 + 2 * GPSEph[prn].af2 *
-                               (GPSPosAndVel[prn].t - GPSPosAndVel[prn].deltat - GPSEph[prn].toc);
+        double roudot = -l * (fix.X) - m * (fix.Y) - n * (fix.Z);
 
-            double roudot = -l * (fix.X) - m * (fix.Y) - n * (fix.Z);
+        B(num, 0) = l;
+        B(num, 1) = m;
+        B(num, 2) = n;
+        B(num, 3) = 1;
+        w(num, 0) = -GPSObs[prn].dopp[0] * LIGHTSPEED / GPSL1 -
+                    roudot + deltatdot * LIGHTSPEED - R;
+        P(num, num) = 1;
+        num ++;
+    }
+    for(int prn = 0; prn < MAXBDSSRN; ++prn)
+    {
+        if(BDSObsNum == 0)
+            break;
+        if(BDSPosAndVel[prn].n == -1 ||
+            BDSObs[prn].dopp[0] == -1)
+            continue;
+        // 地球自转改正
+        XYZ fix = BDSPosAndVel[prn].SatVelocity;
+        // EarthRotationFix(BDSPosAndVel[prn].deltat, BDSPosAndVel[prn].SatVelocity, BDS, fix);
+        // 在SPP时已经自转改正  故不需要再次改正
+        XYZ SatPosi = this->result.BDSPosi[prn];
+        XYZ pos = this->result.UserPositionXYZ;
+        double rou = dist(SatPosi, pos);
+        // double rou = this->result.BDSDist[prn];
+        double l = (-SatPosi.X + RefPos.X) / rou; 
+        double m = (-SatPosi.Y + RefPos.Y) / rou;
+        double n = (-SatPosi.Z + RefPos.Z) / rou;
 
-            B(num, 0) = l;
-            B(num, 1) = m;
-            B(num, 2) = n;
-            B(num, 3) = 1;
-            w(num, 0) = -GPSObs[prn].dopp[0] * LIGHTSPEED / GPSL1 -
-                        roudot + deltatdot * LIGHTSPEED;
-            P(num, num) = 1;
-            num ++;
-        }
-        for(int prn = 0; prn < MAXBDSSRN; ++prn)
-        {
-            if(BDSObsNum == 0)
-                break;
-            if(BDSPosAndVel[prn].n == -1 ||
-               BDSObs[prn].dopp[0] == -1)
-                continue;
-            // 地球自转改正
-            XYZ fix = BDSPosAndVel[prn].SatVelocity;
-            // EarthRotationFix(BDSPosAndVel[prn].deltat, BDSPosAndVel[prn].SatVelocity, BDS, fix);
-            // 在SPP时已经自转改正  故不需要再次改正
-            XYZ SatPosi = this->result.BDSPosi[prn];
-            double rou = this->result.BDSDist[prn];
-            double l = (-SatPosi.X + RefPos.X) / rou; 
-            double m = (-SatPosi.Y + RefPos.Y) / rou;
-            double n = (-SatPosi.Z + RefPos.Z) / rou;
+        double deltatdot = BDSPosAndVel[prn].clkdot;//BDSEph[prn].af1 + 2 * BDSEph[prn].af2 *
+                            //(BDSPosAndVel[prn].t - BDSPosAndVel[prn].deltat - BDSEph[prn].toc);
 
-            double deltatdot = BDSEph[prn].af1 + 2 * BDSEph[prn].af2 *
-                               (BDSPosAndVel[prn].t - BDSPosAndVel[prn].deltat - BDSEph[prn].toc);
+        double roudot = -l * (fix.X) - m * (fix.Y) - n * (fix.Z);
 
-            double roudot = -l * (fix.X) - m * (fix.Y) - n * (fix.Z);
+        B(num, 0) = l;
+        B(num, 1) = m;
+        B(num, 2) = n;
+        B(num, 3) = 1;
+        w(num, 0) = -BDSObs[prn].dopp[0] * LIGHTSPEED / BDSB1 -
+                    roudot + deltatdot * LIGHTSPEED - R;
+        P(num, num) = 1;
+        num ++;
+    }
+    int flag = 0;
+    MatrixXd B_T = B.transpose();
+    MatrixXd tmp1 = B_T * P;
+    MatrixXd tmp2 = tmp1 * B;
+    MatrixXd tmp3 = tmp2.inverse(flag);
+    MatrixXd tmp4 = tmp3 * B_T;
+    MatrixXd tmp5 = tmp4 * P;
+    MatrixXd v = tmp5 * w;
 
-            B(num, 0) = l;
-            B(num, 1) = m;
-            B(num, 2) = n;
-            B(num, 3) = 1;
-            w(num, 0) = -BDSObs[prn].dopp[0] * LIGHTSPEED / BDSB1 -
-                        roudot + deltatdot * LIGHTSPEED;
-            P(num, num) = 1;
-            num ++;
-        }
-        int flag = 0;
-        MatrixXd B_T = B.transpose();
-        MatrixXd tmp1 = B_T * P;
-        MatrixXd tmp2 = tmp1 * B;
-        MatrixXd tmp3 = tmp2.inverse(flag);
-        MatrixXd tmp4 = tmp3 * B_T;
-        MatrixXd tmp5 = tmp4 * P;
-        MatrixXd v = tmp5 * w;
-
-        if(flag != 0){
-            B_T.deleteMatrix();
-            tmp1.deleteMatrix();
-            tmp2.deleteMatrix();
-            tmp3.deleteMatrix();
-            tmp4.deleteMatrix();
-            tmp5.deleteMatrix();
-            P.deleteMatrix();
-            w.deleteMatrix();
-            B.deleteMatrix();
-            v.deleteMatrix();
-            return NOT_INVERTIBLE;
-        }
-        
-        RefV.X += v(0, 0);
-        RefV.Y += v(1, 0);
-        RefV.Z += v(2, 0);
-        
-        MatrixXd tmp6 = B * v;
-        MatrixXd tmp7 = tmp6 - w;
-        MatrixXd tmp8 = tmp7.transpose();
-        MatrixXd tmp9 = tmp8 * P;
-        MatrixXd tmp10 = tmp9 * tmp7;
-        int Obsnum = 4;
-        double sigma = sqrt(tmp10(0, 0) / (BDSObsNum + GPSObsNum - Obsnum));
-        result.UserVelocitySigma = sigma;
-
-        tmp6.deleteMatrix();
-        tmp7.deleteMatrix();
-        tmp8.deleteMatrix();
-        tmp9.deleteMatrix();
-        tmp10.deleteMatrix();
-
-        Vector3d dx;
-        for(int i = 0; i < dx.row(); i++)
-            dx(i, 0) = v(i, 0);
-        if(dx.norm() < 1e-5)
-        {
-            dx.deleteMatrix();
-            B_T.deleteMatrix();
-            tmp1.deleteMatrix();
-            tmp2.deleteMatrix();
-            tmp3.deleteMatrix();
-            tmp4.deleteMatrix();
-            tmp5.deleteMatrix();
-            v.deleteMatrix();
-            break;        
-        }
-        count ++;
-        dx.deleteMatrix();
+    if(flag != 0){
         B_T.deleteMatrix();
         tmp1.deleteMatrix();
         tmp2.deleteMatrix();
         tmp3.deleteMatrix();
         tmp4.deleteMatrix();
         tmp5.deleteMatrix();
+        P.deleteMatrix();
+        w.deleteMatrix();
+        B.deleteMatrix();
         v.deleteMatrix();
+        return NOT_INVERTIBLE;
     }
+    
+    RefV.X += v(0, 0);
+    RefV.Y += v(1, 0);
+    RefV.Z += v(2, 0);
+    R += v(3, 0);
+    
+    MatrixXd tmp6 = B * v;
+    MatrixXd tmp7 = tmp6 - w;
+    MatrixXd tmp8 = tmp7.transpose();
+    MatrixXd tmp9 = tmp8 * P;
+    MatrixXd tmp10 = tmp9 * tmp7;
+    int Obsnum = 4;
+    double sigma = sqrt(tmp10(0, 0) / (BDSObsNum + GPSObsNum - Obsnum));
+    result.UserVelocitySigma = sigma;
+
+    tmp6.deleteMatrix();
+    tmp7.deleteMatrix();
+    tmp8.deleteMatrix();
+    tmp9.deleteMatrix();
+    tmp10.deleteMatrix();
+
+    Vector3d dx;
+    for(int i = 0; i < dx.row(); i++)
+        dx(i, 0) = v(i, 0);
+    dx.deleteMatrix();
+    B_T.deleteMatrix();
+    tmp1.deleteMatrix();
+    tmp2.deleteMatrix();
+    tmp3.deleteMatrix();
+    tmp4.deleteMatrix();
+    tmp5.deleteMatrix();
+    v.deleteMatrix();
     this->result.UserVelocity = RefV;
     B.deleteMatrix();
     P.deleteMatrix();

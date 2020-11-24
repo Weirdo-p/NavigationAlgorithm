@@ -172,6 +172,7 @@ void Matrix<Type, _0, _1>::resize(int row, int col)
     data = new Type[row * col];
 }
 
+
 /* return row of this matrix */
 template<class Type, int _0, int _1>
 int Matrix<Type, _0, _1>::row() const

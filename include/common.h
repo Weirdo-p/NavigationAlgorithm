@@ -250,8 +250,8 @@ struct Satellite
     XYZ    GK;
     double vk, phik, Ek, tk;
     double uk, rk, ik, Omegak;
-    double clkdif = 0, n = -1;
-    double deltat, t;
+    double clkdif = 0, n = -1, clkdot = 0;
+    double deltat, t, Ekdot = 0;
 };
 
 struct SPPResult

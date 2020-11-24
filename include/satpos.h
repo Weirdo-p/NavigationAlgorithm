@@ -81,7 +81,18 @@ public:
      * @param sys     [in]  system flag
      * @param ClkDif  [out] satellite clock difference
     *****************************************************/
-    int CalculateClkDif(const Ephemeris* BDSEph, const int prn, const SATTIME tsv, const NavSys sys, double &ClkDif);
+    int CalculateClkDif(const Ephemeris* Eph, const int prn, const SATTIME tsv, const NavSys sys, double &ClkDif);
+
+
+    /*****************************************************
+     * function: to calculate satellite clock difference
+     * @param BDSEph  [in]  BDS Ephemeris
+     * @param prn     [in]  satellite prn number
+     * @param tsv     [in]  卫星钟表面时
+     * @param sys     [in]  system flag
+     * @param ClkDif  [out] satellite clock difference
+    *****************************************************/
+    int CalculateClkDifdot(const Ephemeris* Eph, const int prn, const SATTIME tsv, const NavSys sys, double &ClkDif);
 
     /**********************************************
      * function: to calculate mean motion(rad/sec)

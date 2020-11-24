@@ -7,10 +7,10 @@
 
 #include "common.h"
 
+
 // WGS84基椭球参数
 extern const double a_w;
 extern const double b_w;
-
 
 // CGCS2000 椭球参数
 extern const double a_c;

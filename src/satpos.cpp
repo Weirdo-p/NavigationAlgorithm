@@ -361,6 +361,10 @@ int SatPos::CalculateSatVel(Ephemeris* &&Eph, const NavSys flag, SPPResult resul
             // temp
             double phik = param[prn].phik;
             double Ekdot = param[prn].n / (1 - Eph[prn].ecc * cos(param[prn].Ek));
+            if(flag == GPS)
+                this->Gps[prn].Ekdot = Ekdot;
+            if(flag == BDS)
+                this->Bds[prn].Ekdot = Ekdot;
 
             // temp param, to calculate long equation
             double left = sqrt((1 + Eph[prn].ecc) / (1 - Eph[prn].ecc));
@@ -561,13 +565,17 @@ int SatPos::Calculatet(const Obs* ObsData, const Ephemeris* Eph,
 
     try
     {
-        double clkdif;
+        double clkdif, clkdot;
         CalculateClkDif(Eph, prn, t, sys, clkdif);
-
-        if(sys == GPS)
+        CalculateClkDifdot(Eph, prn, t, sys, clkdot);
+        if(sys == GPS) {
             Gps[prn].clkdif = clkdif;
-        else if(sys == BDS)
+            Gps[prn].clkdot = clkdot;
+        }
+        else if(sys == BDS) {
             Bds[prn].clkdif = clkdif;
+            Bds[prn].clkdot = clkdot;
+        }
     }
     catch(...)
     {
@@ -606,3 +614,31 @@ int SatPos::CalculateClkDif(const Ephemeris* Eph, const int prn, const SATTIME t
     return 0;
 }
 
+int SatPos::CalculateClkDifdot(const Ephemeris* Eph, const int prn, const SATTIME tsv,
+                               const NavSys sys, double &ClkDifdot) {
+    double F, Ek, Ekdot;
+    ClkDifdot = 0;
+    try
+    {
+        if(sys == GPS){
+            F = -2 * sqrt(GPSMIU) / LIGHTSPEED / LIGHTSPEED;
+            Ek = Gps[prn].Ek;
+            Ekdot =  Gps[prn].Ekdot;
+        }
+        else if(sys == BDS){
+            F = -2 * sqrt(BDSMIU) / LIGHTSPEED / LIGHTSPEED;
+            Ek = Bds[prn].Ek;
+            Ekdot = Bds[prn].Ekdot;
+        }
+    }
+    catch(...)
+    {
+        cout << "error happened when calculation satellite clock difference" << endl;
+        return UNKNOWN_ERROR;
+    }
+    double deltatr = F * Eph[prn].ecc * Eph[prn].sqrtA * cos(Ek) * Ekdot;
+    SATTIME t_now = tsv;
+    ClkDifdot = Eph[prn].af1 + 2 * Eph[prn].af2 * (t_now.SOW - Eph[prn].toc) + deltatr; 
+
+    return 0;
+}
